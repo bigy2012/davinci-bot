@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คู่มือ DaVinci Bot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f6f3; --surface: #ffffff; --surface-2: #f0eee9; --text: #1d1c1a; --muted: #6b6862;
+  --border: #e3e0d9; --accent: #c2410c; --accent-soft: #fdeee6; --ok: #15803d; --ok-soft: #e7f5ec;
+  --warn: #a16207; --warn-soft: #fdf6e3; --video: #3b6fd8; --audio: #2f9e6a; --code-bg: #f3f1ec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141412; --surface: #1d1c1a; --surface-2: #26251f; --text: #ecebe6; --muted: #a29f97;
+    --border: #34322c; --accent: #fb923c; --accent-soft: #3a2416; --ok: #4ade80; --ok-soft: #16301f;
+    --warn: #facc15; --warn-soft: #332b10; --video: #6b97f0; --audio: #4cc38a; --code-bg: #26251f;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141412; --surface: #1d1c1a; --surface-2: #26251f; --text: #ecebe6; --muted: #a29f97;
+  --border: #34322c; --accent: #fb923c; --accent-soft: #3a2416; --ok: #4ade80; --ok-soft: #16301f;
+  --warn: #facc15; --warn-soft: #332b10; --video: #6b97f0; --audio: #4cc38a; --code-bg: #26251f;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: "IBM Plex Sans Thai", system-ui, sans-serif; font-size: 16px; line-height: 1.75;
+}
+.wrap { max-width: 860px; margin: 0 auto; padding: 48px 16px 96px; }
+header { margin-bottom: 40px; }
+.eyebrow { color: var(--accent); font-weight: 600; font-size: 14px; letter-spacing: .04em; }
+h1 { font-size: clamp(30px, 6vw, 42px); line-height: 1.25; margin: 6px 0 12px; }
+.lede { color: var(--muted); font-size: 18px; margin: 0; }
+nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin: 28px 0 8px; }
+nav.toc b { font-size: 14px; color: var(--muted); font-weight: 600; }
+nav.toc ol { margin: 6px 0 0; padding-left: 22px; columns: 2; column-gap: 32px; }
+nav.toc a { color: var(--text); text-decoration: none; }
+nav.toc a:hover { color: var(--accent); }
+@media (max-width: 560px) { nav.toc ol { columns: 1; } }
+section { margin-top: 56px; }
+h2 { font-size: 26px; margin: 0 0 6px; scroll-margin-top: 16px; }
+h2 .num { color: var(--accent); margin-right: 8px; }
+.sub { color: var(--muted); margin: 0 0 20px; }
+h3 { font-size: 18px; margin: 0 0 6px; }
+p { margin: 0 0 12px; }
+code, pre { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 14px; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 5px; }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; overflow-x: auto; margin: 8px 0 12px; line-height: 1.6; }
+pre code { background: none; padding: 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.step { display: grid; grid-template-columns: 44px 1fr; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+.step .n { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; }
+.step p:last-child, .step pre:last-child { margin-bottom: 0; }
+.where { display: inline-block; font-size: 13px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 0 10px; margin-bottom: 6px; }
+.menu { font-weight: 600; }
+.menu span { color: var(--muted); font-weight: 400; margin: 0 4px; }
+.note { border-radius: 10px; padding: 12px 14px; margin: 12px 0; font-size: 15px; }
+.note.ok { background: var(--ok-soft); border-left: 4px solid var(--ok); }
+.note.warn { background: var(--warn-soft); border-left: 4px solid var(--warn); }
+.note.tip { background: var(--accent-soft); border-left: 4px solid var(--accent); }
+.chat { display: grid; gap: 8px; margin: 10px 0 0; }
+.bubble { padding: 10px 14px; border-radius: 14px; max-width: 92%; font-size: 15px; }
+.bubble.you { background: var(--accent); color: #fff; justify-self: end; border-bottom-right-radius: 4px; }
+.bubble.ai { background: var(--surface-2); border-bottom-left-radius: 4px; }
+.bubble .who { display: block; font-size: 12px; opacity: .75; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: 13px; color: var(--muted); font-weight: 600; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 4px 8px; }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.flow .box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
+.flow .box b { display: block; font-size: 15px; }
+.flow .arrow { color: var(--muted); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+svg text { font-family: "IBM Plex Sans Thai", sans-serif; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--muted); margin-top: 6px; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; }
+summary { cursor: pointer; font-weight: 600; }
+details p { margin: 8px 0 0; }
+footer { margin-top: 64px; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">DAVINCI BOT · คู่มือใช้งาน</div>
+  <h1>สั่ง Claude ตัดต่อใน DaVinci Resolve แบบ step by step</h1>
+  <p class="lede">MCP ที่ให้ Claude ตัดต่อใน DaVinci Resolve เวอร์ชันฟรีตามคำสั่งของคุณ ใช้ได้ทั้งลัพคัท เรียงช็อต ใส่ B-roll ทำซับไทย และ export</p>
+  <nav class="toc">
+    <b>สารบัญ</b>
+    <ol>
+      <li><a href="#how">ทำงานยังไง</a></li>
+      <li><a href="#setup">ติดตั้ง (ทำครั้งเดียว)</a></li>
+      <li><a href="#daily">ใช้งานทุกครั้ง</a></li>
+      <li><a href="#webapp">หน้าเว็บ / แอป Mac</a></li>
+      <li><a href="#roughcut">ฟังก์ชัน 1: Rough Cut</a></li>
+      <li><a href="#cuts">J / L cut คืออะไร</a></li>
+      <li><a href="#subs">ฟังก์ชัน 2: ซับไตเติล</a></li>
+      <li><a href="#broll">ฟังก์ชัน 3: B-roll อัตโนมัติ</a></li>
+      <li><a href="#audio">ฟังก์ชัน 4: เพลง + SFX</a></li>
+      <li><a href="#look">ฟังก์ชัน 5: แต่งหน้าใส</a></li>
+      <li><a href="#creator">ฟังก์ชัน 6: วิเคราะห์ creator</a></li>
+      <li><a href="#script">ฟังก์ชัน 7: เขียนสคริปต์</a></li>
+      <li><a href="#examples">ตัวอย่างคำสั่ง</a></li>
+      <li><a href="#tools">เครื่องมือทั้งหมด</a></li>
+      <li><a href="#trouble">แก้ปัญหา</a></li>
+    </ol>
+  </nav>
+</header>
+
+<section id="how">
+  <h2><span class="num">1</span>ทำงานยังไง</h2>
+  <p class="sub">คุณคุยกับ Claude ตามปกติ แล้ว Claude ส่งคำสั่งไปให้ Resolve ผ่านตัวกลาง 2 ตัว</p>
+  <div class="flow">
+    <div class="box"><b>คุณ</b>สั่งเป็นภาษาไทย</div><span class="arrow">→</span>
+    <div class="box"><b>Claude Code</b>วางแผนและเลือกเครื่องมือ</div><span class="arrow">→</span>
+    <div class="box"><b>MCP davinci-bot</b>ถอดเสียง วิเคราะห์ คำนวณจุดตัด</div><span class="arrow">→</span>
+    <div class="box"><b>Bridge ใน Resolve</b>สคริปต์ Lua ที่คุณกดเปิด</div><span class="arrow">→</span>
+    <div class="box"><b>DaVinci Resolve</b>timeline ใหม่</div>
+  </div>
+  <div class="note tip">Resolve เวอร์ชันฟรีไม่ยอมให้โปรแกรมภายนอกสั่งงานตรง ๆ จึงต้องมี <b>Bridge</b> ที่รันอยู่ข้างใน Resolve คอยรับคำสั่ง ขั้นตอนเดียวที่คุณต้องทำเองคือกดเปิด Bridge ทุกครั้งที่เปิด Resolve</div>
+</section>
+
+<section id="setup">
+  <h2><span class="num">2</span>ติดตั้ง (ทำครั้งเดียว)</h2>
+  <p class="sub">เครื่องนี้ติดตั้งครบแล้ว ใช้ส่วนนี้เมื่อย้ายเครื่องหรือต้องติดตั้งใหม่</p>
+  <div class="card">
+    <p>ต้องมี DaVinci Resolve 21, <code>uv</code>, <code>ffmpeg</code>, <code>whisper-cli</code> และโมเดล Whisper large-v3 จากนั้นรันในโฟลเดอร์โปรเจกต์:</p>
+<pre><code>cd ~/Desktop/Project/davinci-bot
+./install_bridge.sh          # ใส่ Bridge ลงเมนู Scripts ของ Resolve
+uv sync                      # ติดตั้ง library ของ Python
+claude mcp add --scope user davinci-bot -- uv run --directory "$PWD" server.py
+ln -s "$PWD/skills/davinci-rough-cut" ~/.claude/skills/davinci-rough-cut</code></pre>
+    <p>ตรวจว่าเชื่อมต่อแล้ว:</p>
+<pre><code>claude mcp get davinci-bot   # ต้องขึ้น ✔ Connected</code></pre>
+  </div>
+</section>
+
+<section id="daily">
+  <h2><span class="num">3</span>ใช้งานทุกครั้ง</h2>
+  <p class="sub">8 ขั้นตอน ตั้งแต่เปิดโปรแกรมจนได้ timeline ที่ตัดเสร็จ</p>
+  <ol class="steps">
+    <li class="step"><div class="n">1</div><div>
+      <span class="where">DaVinci Resolve</span>
+      <h3>เปิด Resolve และเปิดโปรเจกต์</h3>
+      <p>เปิดโปรเจกต์ที่จะทำงาน หรือให้ Claude สร้างโปรเจกต์ใหม่ให้ก็ได้</p>
+    </div></li>
+    <li class="step"><div class="n">2</div><div>
+      <span class="where">DaVinci Resolve</span>
+      <h3>เปิด Bridge</h3>
+      <p class="menu">Workspace <span>›</span> Scripts <span>›</span> DaVinci Bot Bridge</p>
+      <p>ไม่มีหน้าต่างอะไรเด้งขึ้นมา เพราะ Bridge จะรอรับคำสั่งอยู่เงียบ ๆ ตลอดที่เปิด Resolve ถ้าปิดแล้วเปิด Resolve ใหม่ต้องกดอีกครั้ง ส่วนการสลับโปรเจกต์ไม่ต้องกดใหม่</p>
+      <div class="note warn">ถ้าไม่เห็นชื่อนี้ในเมนู ให้รัน <code>./install_bridge.sh</code> แล้วเปิดเมนูใหม่</div>
+    </div></li>
+    <li class="step"><div class="n">3</div><div>
+      <span class="where">Claude Code</span>
+      <h3>เปิด session ใหม่</h3>
+      <p>เปิด session ใหม่ในแอป Claude (แท็บ Code) จะเปิดในโฟลเดอร์ไหนก็ได้ เพราะ davinci-bot ติดตั้งแบบใช้ได้ทุกโปรเจกต์ ถ้าอยากเช็ค ให้พิมพ์ว่า "เช็คสถานะ Resolve"</p>
+    </div></li>
+    <li class="step"><div class="n">4</div><div>
+      <span class="where">Claude Code</span>
+      <h3>สั่งงานเป็นภาษาไทย</h3>
+      <p>บอกว่าจะทำอะไรกับไฟล์ไหน ใส่ path ของไฟล์หรือโฟลเดอร์ด้วย</p>
+      <div class="chat"><div class="bubble you"><span class="who">คุณ</span>ลัพคัทไฟล์ในโฟลเดอร์ ~/Desktop/Agent-M/DB Cooper/footage ให้หน่อย</div></div>
+    </div></li>
+    <li class="step"><div class="n">5</div><div>
+      <span class="where">Claude Code</span>
+      <h3>ตอบ brief</h3>
+      <p>Claude จะถามรายละเอียดงานก่อนเริ่มทุกครั้ง โดยถามเฉพาะข้อที่คุณยังไม่ได้บอก และมีค่าแนะนำมาให้</p>
+      <div class="chat">
+        <div class="bubble ai"><span class="who">Claude</span>ก่อนเริ่มขอยืนยัน: จังหวะ tight / natural? ใช้ punch-in ไหม? มีสคริปต์หรือเปล่า? ตั้งชื่อ timeline ว่าอะไร?</div>
+        <div class="bubble you"><span class="who">คุณ</span>tight, ใช้ punch-in, ไม่มีสคริปต์, ชื่อ roughcut db cooper v1</div>
+      </div>
+    </div></li>
+    <li class="step"><div class="n">6</div><div>
+      <span class="where">Claude Code</span>
+      <h3>ตรวจแผนการตัดและฟัง preview</h3>
+      <p>Claude จะวิเคราะห์เสียงแล้วส่งตารางแผนการตัดมาให้ บอกว่าเก็บช่วงไหน ตัดอะไรออกเพราะอะไร พร้อมไฟล์ <code>.wav</code> ที่ต่อเสียงตามแผนไว้แล้วให้กดฟังได้</p>
+      <p>ถ้าอยากแก้ก็บอกได้เลย เช่น "ประโยคปิดใช้เทคแรกแทน" หรือ "อย่าตัดช่วงที่หัวเราะ"</p>
+    </div></li>
+    <li class="step"><div class="n">7</div><div>
+      <span class="where">Claude Code</span>
+      <h3>อนุมัติ แล้ว Claude ลงมือตัด</h3>
+      <div class="chat"><div class="bubble you"><span class="who">คุณ</span>โอเค ตัดได้เลย</div></div>
+      <p>Claude จะสร้าง <b>timeline ใหม่</b> ใน Resolve และเปิดหน้า Edit ให้ ไม่แตะ timeline เดิมของคุณ</p>
+    </div></li>
+    <li class="step"><div class="n">8</div><div>
+      <span class="where">DaVinci Resolve / Claude Code</span>
+      <h3>ตรวจงานแล้วทำต่อ</h3>
+      <p>เปิดดูใน Resolve แล้วจะแก้เองต่อก็ได้ หรือสั่ง Claude ต่อ เช่น "ทำซับไทย", "ใส่ B-roll จากโฟลเดอร์…", "export เป็น YouTube 1080p"</p>
+    </div></li>
+  </ol>
+</section>
+
+<section id="webapp">
+  <h2><span class="num">★</span>หน้าเว็บ / แอป Mac</h2>
+  <p class="sub">สั่งงานผ่านหน้าเว็บแทนการพิมพ์ใน Claude Code</p>
+  <ol class="steps">
+    <li class="step"><div class="n">1</div><div><h3>เปิดแอป</h3><p>ดับเบิลคลิก <b>DaVinci Bot</b> ใน <code>~/Applications</code> (ลากไปไว้ที่ Dock ได้) เบราว์เซอร์จะเปิดหน้า <code>127.0.0.1:8765</code> ให้เอง</p></div></li>
+    <li class="step"><div class="n">2</div><div><h3>ดูแถบสถานะ</h3><p>จุดสีเขียว = Resolve พร้อม (แสดงโปรเจกต์และ timeline), สีเหลือง = กำลังทำงาน, สีแดง = ยังไม่ได้เปิด Bridge</p></div></li>
+    <li class="step"><div class="n">3</div><div><h3>สั่งงาน</h3><p>เลือกการ์ดฟังก์ชันทางซ้าย กรอกฟอร์มแล้วกด "เริ่ม" หรือพิมพ์คำสั่งในช่องแชท ภาพตัวอย่าง เสียงตัวอย่าง และรายงานจะแสดงในแชทเลย</p></div></li>
+    <li class="step"><div class="n">4</div><div><h3>อนุมัติเมื่อถูกถาม</h3><p>คำสั่งที่เสี่ยง เช่น รันคำสั่งระบบ เขียนไฟล์ หรือดาวน์โหลด จะขึ้นกล่องให้กด "อนุญาต" หรือ "ไม่อนุญาต" ทุกครั้ง</p></div></li>
+  </ol>
+  <div class="note tip">ปุ่ม "หยุด" ใช้สั่งหยุดกลางคัน, "แชทใหม่" เริ่มแชทใหม่ (แชทเดิมถูกบันทึกไว้) และ "ปิดแอป" ปิดเซิร์ฟเวอร์ แอปทำงานในเครื่องคุณเท่านั้น</div>
+  <div class="card" style="margin-top:14px"><h3>ประวัติแชท</h3><ul>
+    <li>แท็บ <b>"ประวัติแชท"</b> ทางซ้าย: ค้นหา, เปลี่ยนชื่อ (✎), ลบ (🗑)</li>
+    <li>คลิกแชทเก่าเพื่อเปิดแล้ว<b>คุยต่อได้เลย</b> Claude จำบริบทเดิมทั้งหมด เช่น "ซับอันที่ 12 แก้คำว่า…"</li>
+    <li>วางเมาส์บนข้อความที่เคยส่ง แล้วกด <b>"✎ แก้ไขแล้วส่งใหม่"</b> จะได้แชทแขนงใหม่ที่เริ่มจากจุดนั้น ส่วนแชทเดิมยังอยู่ครบ</li></ul></div>
+</section>
+
+<section id="roughcut">
+  <h2><span class="num">4</span>ฟังก์ชัน 1: Rough Cut (ลัพคัท)</h2>
+  <p class="sub">ตัดช่วงเงียบ คำซ้ำ และที่พูดผิด เลือกเทคที่ดีที่สุด แล้วต่อให้ฟังเหมือนพูดรอบเดียวจบ</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>ตัดออกเสมอ</h3>
+      <ul>
+        <li>slate, นับถอยหลัง, "แอคชั่น"</li>
+        <li>ช่วงเงียบที่ไม่มีประโยชน์</li>
+        <li>ประโยคที่พูดไม่จบแล้วเริ่มใหม่, คำติดอ่าง</li>
+        <li>คำเติม เช่น เอ่อ อ่า อืม</li>
+        <li>ข้อมูลที่พูดผิดแล้วแก้ทีหลัง (เก็บเฉพาะเวอร์ชันที่ถูก)</li>
+        <li>พูดนอกบท เช่น "ปีไหนนะ"</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>เลือกเทคที่ดีที่สุด</h3>
+      <ol>
+        <li><b>ครบ</b>: ประโยคจบสมบูรณ์</li>
+        <li><b>ถูก</b>: เนื้อหาเป็นเวอร์ชันที่แก้แล้ว</li>
+        <li><b>ลื่น</b>: ไม่ติดขัด</li>
+        <li><b>เข้ากัน</b>: น้ำเสียงต่อกับประโยครอบข้างได้</li>
+        <li>ถ้าเสมอกัน ใช้<b>เทคหลังสุด</b></li>
+      </ol>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h3>จังหวะ (pace)</h3>
+    <p>คือระยะที่เผื่อไว้ก่อนและหลังคำพูดของแต่ละช็อต ซึ่งเป็นตัวกำหนดว่าช่องว่างระหว่างประโยคจะยาวแค่ไหน</p>
+    <div class="table-wrap"><table>
+      <tr><th>pace</th><th>เผื่อหน้า</th><th>เผื่อหลัง</th><th>เหมาะกับ</th></tr>
+      <tr><td><code>tight</code></td><td>0.05 วิ</td><td>0.10 วิ</td><td>Shorts, เล่าเรื่องเร็ว</td></tr>
+      <tr><td><code>natural</code></td><td>0.10 วิ</td><td>0.25 วิ</td><td>คลิปยาวทั่วไป (ค่าเริ่มต้น)</td></tr>
+      <tr><td><code>relaxed</code></td><td>0.15 วิ</td><td>0.45 วิ</td><td>สารคดี, อารมณ์ช้า</td></tr>
+    </table></div>
+  </div>
+  <div class="note ok"><b>ผลทดสอบกับฟุตเทจจริง</b> (ไฟล์ DJI_…0016): จาก 2:31 นาทีเหลือ 29.4 วินาที 17 ช็อต ประโยค "ไปติดตามกันใน…" ที่พูดใหม่ 9 รอบเหลือแค่รอบที่ดีที่สุด</div>
+  <p>อยากเปลี่ยนกฎก็แก้ได้ที่ <code>skills/davinci-rough-cut/SKILL.md</code> ซึ่งเขียนเป็นภาษาไทย</p>
+</section>
+
+<section id="cuts">
+  <h2><span class="num">5</span>Jump / J / L cut คืออะไร</h2>
+  <p class="sub">ระบบวางเสียงต่อกันเสมอ แล้วขยับเฉพาะจุดตัดภาพ (V1 = ภาพ, A1 = เสียง)</p>
+  <div class="card">
+    <svg viewBox="0 0 640 300" width="100%" role="img" aria-label="แผนภาพเปรียบเทียบ jump cut, L cut และ J cut">
+      <g font-size="13" fill="var(--text)">
+        <text x="0" y="22" font-weight="600">Jump cut</text>
+        <text x="0" y="44" fill="var(--muted)">ภาพกับเสียงตัดพร้อมกัน</text>
+        <text x="0" y="122" font-weight="600">L cut</text>
+        <text x="0" y="144" fill="var(--muted)">ภาพตัดก่อน เสียงเดิมพูดต่อ</text>
+        <text x="0" y="222" font-weight="600">J cut</text>
+        <text x="0" y="244" fill="var(--muted)">ได้ยินเสียงถัดไปก่อนเห็นภาพ</text>
+      </g>
+      <g font-size="11" fill="#fff">
+        <rect x="220" y="10" width="200" height="28" rx="5" fill="var(--video)"/><text x="232" y="29">V1 ช็อต A</text>
+        <rect x="422" y="10" width="210" height="28" rx="5" fill="var(--video)" opacity=".75"/><text x="434" y="29">V1 ช็อต B</text>
+        <rect x="220" y="42" width="200" height="28" rx="5" fill="var(--audio)"/><text x="232" y="61">A1 เสียง A</text>
+        <rect x="422" y="42" width="210" height="28" rx="5" fill="var(--audio)" opacity=".75"/><text x="434" y="61">A1 เสียง B</text>
+
+        <rect x="220" y="110" width="160" height="28" rx="5" fill="var(--video)"/><text x="232" y="129">V1 ช็อต A</text>
+        <rect x="382" y="110" width="250" height="28" rx="5" fill="var(--video)" opacity=".75"/><text x="394" y="129">V1 ช็อต B</text>
+        <rect x="220" y="142" width="200" height="28" rx="5" fill="var(--audio)"/><text x="232" y="161">A1 เสียง A</text>
+        <rect x="422" y="142" width="210" height="28" rx="5" fill="var(--audio)" opacity=".75"/><text x="434" y="161">A1 เสียง B</text>
+
+        <rect x="220" y="210" width="240" height="28" rx="5" fill="var(--video)"/><text x="232" y="229">V1 ช็อต A</text>
+        <rect x="462" y="210" width="170" height="28" rx="5" fill="var(--video)" opacity=".75"/><text x="474" y="229">V1 ช็อต B</text>
+        <rect x="220" y="242" width="200" height="28" rx="5" fill="var(--audio)"/><text x="232" y="261">A1 เสียง A</text>
+        <rect x="422" y="242" width="210" height="28" rx="5" fill="var(--audio)" opacity=".75"/><text x="434" y="261">A1 เสียง B</text>
+      </g>
+      <g stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 3">
+        <line x1="421" y1="4" x2="421" y2="76"/>
+        <line x1="421" y1="104" x2="421" y2="176"/>
+        <line x1="421" y1="204" x2="421" y2="276"/>
+      </g>
+      <text x="421" y="294" font-size="11" fill="var(--accent)" text-anchor="middle">จุดตัดเสียง (เท่ากันทุกแบบ)</text>
+    </svg>
+    <div class="legend"><span><i style="background:var(--video)"></i>ภาพ (V1)</span><span><i style="background:var(--audio)"></i>เสียง (A1)</span></div>
+  </div>
+  <div class="table-wrap" style="margin-top:14px"><table>
+    <tr><th>แบบ</th><th>ใช้เมื่อ</th><th>สั่งยังไง</th></tr>
+    <tr><td><b>Jump cut</b></td><td>ค่าเริ่มต้น ใช้ระหว่างชิ้นที่เป็นความคิดเดียวกัน</td><td>"ตัดชนธรรมดา"</td></tr>
+    <tr><td><b>Punch-in</b></td><td>ซูมสลับ 100% / 110% ทุกช็อต ทำให้ jump cut กล้องเดียวดูตั้งใจ</td><td>"ใส่ punch-in 110%"</td></tr>
+    <tr><td><b>L cut</b></td><td>ตอนจบประโยคแล้วขึ้นประโยคใหม่ ทำให้รอยต่อนุ่ม</td><td>"ใช้ L-cut ตอนขึ้นประโยคใหม่"</td></tr>
+    <tr><td><b>J cut</b></td><td>คำตอบหรือการเปลี่ยนเรื่อง ต้องมีช่วงเงียบก่อนประโยคถัดไปพอ ไม่อย่างนั้นจะเห็นปากขยับไม่ตรงเสียง</td><td>"ใช้ J-cut ตอนเปลี่ยนหัวข้อ"</td></tr>
+  </table></div>
+</section>
+
+<section id="subs">
+  <h2><span class="num">6</span>ฟังก์ชัน 2: ซับไตเติลภาษาไทย</h2>
+  <p class="sub">ซับตามบริบท ไม่ล้นจอ ไม่บังหน้า มี 2 แบบตามประเภทคลิป</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>คลิปยาว: <code>clean</code></h3>
+      <p>กลางล่างจอ ตัวขาวขอบดำและมีเงา บรรทัดละไม่เกิน 38 ตัวอักษร ใส่ลง <b>subtitle track</b> ของ Resolve แก้ข้อความใน Resolve ได้ และส่งไฟล์ .srt ขึ้น YouTube ได้</p>
+    </div>
+    <div class="card">
+      <h3>คลิปสั้น: <code>pop</code> / <code>karaoke</code> / <code>box</code></h3>
+      <ul>
+        <li><b>pop</b>: ซับเด้งเข้า คำที่กำลังพูดเป็นสีเหลืองและขยาย คำเน้นเป็นสีแดง</li>
+        <li><b>karaoke</b>: คำค่อยๆ สว่างขึ้นตามเสียง สไลด์ขึ้น</li>
+        <li><b>box</b>: ตัวอักษรบนกล่องสี สลับสีทุกซับ</li>
+      </ul>
+      <p>ซับละ 1 บรรทัด ไม่เกิน 16 ตัวอักษร เรนเดอร์เป็นคลิปใส 1 ไฟล์ต่อ 1 ซับ วางบน track "Captions"</p>
+    </div>
+  </div>
+  <ol class="steps" style="margin-top:14px">
+    <li class="step"><div class="n">1</div><div><h3>สั่ง</h3><p>"ใส่ซับให้ timeline roughcut v1 แบบ pop" (บอกชื่อคน ชื่อสถานที่ หรือตัวเลขที่ต้องสะกดให้ถูกด้วยได้)</p></div></li>
+    <li class="step"><div class="n">2</div><div><h3>Claude ร่างและตรวจแก้คำ</h3><p>ถอดเสียง แบ่งคำไทยไม่ให้ขาดกลางคำ แก้คำที่ Whisper ฟังผิดตามบริบท แล้วเลือกคำที่จะเน้นด้วย <code>*คำ*</code></p></div></li>
+    <li class="step"><div class="n">3</div><div><h3>ดูภาพตัวอย่างบนเฟรมจริง</h3><p>ภาพแสดงซับบนวิดีโอของคุณ ส่วนคลิปแนวตั้งจะมี<b>แถบแดง</b>บอกพื้นที่ที่ปุ่มของ Shorts/TikTok จะบัง ถ้าอยากเลื่อน ขยาย หรือเปลี่ยนสีก็สั่งได้</p></div></li>
+    <li class="step"><div class="n">4</div><div><h3>อนุมัติ แล้วซับจะลง timeline</h3><p>ถ้าอยากแก้ทีหลัง ให้สั่งเรนเดอร์ใหม่ ระบบจะแทนที่ track "Captions" เดิมทั้งหมด</p></div></li>
+  </ol>
+</section>
+
+<section id="broll">
+  <h2><span class="num">7</span>ฟังก์ชัน 3: B-roll / Insert อัตโนมัติ</h2>
+  <p class="sub">AI หาภาพ ฟุตเทจ ภาพเก่า หรือมีม ที่ตรงกับคำพูด แล้ววางให้ พร้อมเช็คลิขสิทธิ์</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>แหล่งภาพ (ไม่ต้องสมัคร)</h3>
+      <ul>
+        <li><b>Openverse</b>: ภาพ Creative Commons จาก Flickr และพิพิธภัณฑ์</li>
+        <li><b>Internet Archive</b>: ฟุตเทจเก่า ข่าวเก่า หนังสาธารณสมบัติ</li>
+        <li><b>NASA</b>: สาธารณสมบัติ</li>
+        <li><b>Imgflip</b>: เทมเพลตมีม (เมื่ออนุญาต)</li>
+        <li><b>Pexels / Pixabay</b>: stock video คุณภาพสูง (ใส่ API key ฟรีแล้วใช้ได้)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>ระดับลิขสิทธิ์</h3>
+      <ul>
+        <li><b>[A]</b> ใช้ได้เสรี: Public Domain, CC0, Pexels, Pixabay</li>
+        <li><b>[B]</b> ต้องให้เครดิต: CC BY, CC BY-SA (ใส่เครดิตบนจอให้อัตโนมัติ)</li>
+        <li><b>[C]</b> Fair use หรือไม่ระบุสิทธิ์: มีม ใช้น้อยและต้องยอมรับความเสี่ยงเอง</li>
+        <li>NC/ND ถูกตัดทิ้งเสมอ เพราะช่องที่หารายได้ใช้ไม่ได้</li>
+      </ul>
+    </div>
+  </div>
+  <div class="table-wrap" style="margin-top:14px"><table>
+    <tr><th>layout</th><th>หน้าตา</th><th>ใช้เมื่อ</th></tr>
+    <tr><td><code>full</code></td><td>เต็มจอ ภาพนิ่งซูม/แพนช้าๆ (Ken Burns) ถ้าสัดส่วนไม่ตรงจอจะใช้พื้นหลังเบลอ</td><td>จุดสำคัญ, เปลี่ยนฉาก</td></tr>
+    <tr><td><code>pip</code></td><td>การ์ดมุมโค้ง ขอบขาว มีเงา อยู่ข้างคนพูด เด้งเข้า-ออก</td><td>ขยายความโดยยังเห็นหน้าคนพูด</td></tr>
+    <tr><td><code>top</code></td><td>การ์ดด้านบนของคลิปแนวตั้ง</td><td>Shorts / Reels</td></tr>
+    <tr><td><code>meme</code></td><td>การ์ดกลางจอ เด้งเข้าแบบเอียง</td><td>มุก, ประชด (สั้นๆ)</td></tr>
+  </table></div>
+  <ol class="steps" style="margin-top:14px">
+    <li class="step"><div class="n">1</div><div><h3>สั่ง</h3><p>"ใส่ B-roll ให้ timeline roughcut v1 ทุกๆ 6 วิ ไม่เอามีม"</p></div></li>
+    <li class="step"><div class="n">2</div><div><h3>Claude วางแผนและค้นหา</h3><p>อ่านว่าช่วงไหนพูดถึงอะไร แล้วค้นหาแหล่งภาพ เปิดดู thumbnail จริงทุกภาพก่อนเลือก</p></div></li>
+    <li class="step"><div class="n">3</div><div><h3>อนุมัติแผน + รายการดาวน์โหลด</h3><p>ได้ตาราง: เวลา / คำพูด / ภาพ / สิทธิ์ / layout พร้อมแผ่นภาพตัวอย่างให้ดู ระบบจะดาวน์โหลดเฉพาะชิ้นที่อนุมัติ</p></div></li>
+    <li class="step"><div class="n">4</div><div><h3>วางลง timeline</h3><p>วางบน track "B-roll" ซึ่งอยู่ใต้ Captions เสมอ ได้ข้อความเครดิตไว้วางในคำอธิบาย YouTube และไฟล์อยู่ใน <code>~/Movies/DaVinci Bot B-roll</code></p></div></li>
+  </ol>
+</section>
+
+<section id="audio">
+  <h2><span class="num">8</span>ฟังก์ชัน 4: เพลงประกอบ + SFX</h2>
+  <p class="sub">AI หาจังหวะใน timeline แล้วใส่เสียงจากคลังของคุณ (Agent-M/SFX และ Agent-M/MUSIC)</p>
+  <div class="table-wrap"><table>
+    <tr><th>จังหวะ</th><th>เสียง</th><th>วางตรงไหน</th></tr>
+    <tr><td>ตบมุก</td><td>boing, failure-trumpet, wrong-answer, nooo</td><td>ในช่วงเงียบหลังประโยคที่เป็นมุก</td></tr>
+    <tr><td>กระแทกอารมณ์ / เฉลย</td><td>vine-boom, hit</td><td>ตรงคำสำคัญหรือจุดหักมุมพอดี</td></tr>
+    <tr><td>เปลี่ยนฉาก</td><td>whoosh, swoosh</td><td>จุดตัด หรือตอน B-roll เต็มจอเข้า</td></tr>
+    <tr><td>ภาพหรือการ์ดโผล่</td><td>pop, camera-shutter, typing</td><td>ตอนการ์ด/มีมเด้งเข้า</td></tr>
+    <tr><td>ลุ้น / อยากดูต่อ</td><td>เสียงที่ค่อยๆ ดังขึ้นแล้วไปจบตรงจุดเฉลย, เพลงเงียบลงก่อนเฉลย</td><td>ก่อนเฉลยและประโยคปิด</td></tr>
+  </table></div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card"><h3>ตรงจังหวะพอดี</h3><p>ระบบวัดว่า SFX แต่ละไฟล์กระแทกที่วินาทีไหน (เช่น vine-boom กระแทกที่ 0.36 วิ) แล้ววางให้จุดกระแทกตรงกับคำพอดี และให้จุดที่เพลงพุ่งตรงกับจุดหักมุมของเรื่อง</p></div>
+    <div class="card"><h3>เสียงพูดชัดเสมอ</h3><p>เพลงลดลงประมาณ 8–10 dB ตอนพูดแล้วดังขึ้นตอนเงียบ (ducking) ส่วน SFX ถูกปรับความดังเทียบกับเสียงพูด มี 4 ระดับ: loud / normal / soft / subtle</p></div>
+  </div>
+  <div class="note warn">เรื่องโศกนาฏกรรมจริง (MH370, ซารินโตเกียว, น้ำท่วม) จะไม่ใส่ SFX ตลกหรือมีม ใช้เฉพาะเสียงตึงเครียดและ impact เบาๆ</div>
+  <ol class="steps" style="margin-top:14px">
+    <li class="step"><div class="n">1</div><div><h3>สั่ง</h3><p>"ใส่เพลงกับ SFX ให้ timeline roughcut v1 แนวลุ้นๆ มีตบมุกนิดหน่อย"</p></div></li>
+    <li class="step"><div class="n">2</div><div><h3>ตรวจแผน + ฟังตัวอย่าง</h3><p>ได้ตาราง เวลา / ประโยค / เสียง / เหตุผล พร้อมไฟล์ mp3 ที่มิกซ์แล้วให้กดฟัง</p></div></li>
+    <li class="step"><div class="n">3</div><div><h3>อนุมัติ แล้วเสียงจะลง timeline</h3><p>วางบน audio track "Music" และ "SFX" ถ้าอยากแก้ก็สั่งได้ เช่น "เอา boing ออก" หรือ "vine-boom ดังไป"</p></div></li>
+  </ol>
+</section>
+
+<section id="look">
+  <h2><span class="num">9</span>ฟังก์ชัน 5: แต่งหน้าใส (natural-skin)</h2>
+  <p class="sub">ผิวเนียนใสแบบธรรมชาติ ไม่เวอร์ ใช้ได้ใน Resolve เวอร์ชันฟรี</p>
+  <div class="grid2">
+    <div class="card"><h3>ทำอะไรบ้าง</h3><ul>
+      <li>เลือกเฉพาะผิว (ผม คิ้ว ตา ไม่ถูกแตะ)</li>
+      <li>วงรีขอบนุ่มรอบหัว กันไม่ให้ผนังสีเบจโดนแก้ไปด้วย</li>
+      <li>ลดรายละเอียดผิวประมาณ 17%: จุดและรูขุมขนจางลง แต่ยังเห็นเนื้อผิว</li>
+      <li>ผิวสว่างขึ้นเล็กน้อยและลดความแดง ดูใสขึ้น</li></ul></div>
+    <div class="card"><h3>วิธีสั่ง</h3><p>"แต่งหน้าใสให้ timeline roughcut v1" แล้ว Claude จะส่งภาพเทียบก่อน/หลังให้ดูก่อน อนุมัติแล้วจะใส่ให้ทุกคลิป ถ้าไม่ชอบสั่ง "ล้างสีออก" ได้</p>
+    <p>preset นี้ทำมาสำหรับมุมกล้องและแสงในห้องทำงานของคุณ ถ้าถ่ายที่อื่น ให้สั่งทำ preset ใหม่</p></div>
+  </div>
+  <div class="table-wrap" style="margin-top:14px"><table>
+    <tr><th>ไฟล์</th><th>ทำอะไร</th><th>ใช้กับ</th></tr>
+    <tr><td><code>natural-skin.drx</code></td><td>ผิวเนียน + ผิวใส + วงรีกันผนัง</td><td>DaVinci Resolve (ผ่าน bot)</td></tr>
+    <tr><td><code>natural-skin-tone-light / ปกติ / -strong.cube</code></td><td>ผิวใสอย่างเดียว (LUT ทำผิวเนียนไม่ได้)</td><td>CapCut, DaVinci Resolve, Premiere<br><code>~/Desktop/Agent-M/LUTs/</code></td></tr>
+  </table></div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card"><h3>ใช้ใน CapCut (desktop)</h3><ol><li>เลือกคลิป แล้วไปที่ Adjust → LUT</li><li>Import LUT แล้วเลือกไฟล์ .cube จาก <code>Agent-M/LUTs</code></li><li>ปรับ Intensity เพิ่มหรือลดได้ตามชอบ</li></ol></div>
+    <div class="card"><h3>ใช้ใน Resolve (ทำเอง)</h3><ol><li>หน้า Color คลิกขวาที่ node</li><li>LUT → davinci-bot → natural-skin-tone</li><li>ห้ามใช้ซ้อนกับ natural-skin.drx</li></ol></div>
+  </div>
+</section>
+
+<section id="creator">
+  <h2><span class="num">10</span>ฟังก์ชัน 6: วิเคราะห์ Creator</h2>
+  <p class="sub">หาเสน่ห์ จุดเด่น จุดด้อย และแนวทางต่อไป โดยทุกข้อมีหลักฐานจากงานจริง</p>
+  <div class="grid2">
+    <div class="card"><h3>วัดจากฟุตเทจ</h3><ul><li>เวลาที่พูดจริงเทียบกับเวลาอัด และสัดส่วนการพูดซ้ำ</li><li>ความเร็วพูด และช่วงเสียงสูงต่ำ (ความมีชีวิตชีวา)</li><li>ความสะอาดของเสียง</li><li>ความล้าระหว่าง session</li><li>เฟรมตัวอย่าง: แสง, สายตา, การวางตัวในเฟรม</li></ul></div>
+    <div class="card"><h3>อ่านจากสคริปต์และแบรนด์</h3><ul><li>ความยาวเทียบกับแผน, hook, โครงเรื่อง, ปมที่วางไว้แล้วเฉลย</li><li>การแก้สคริปต์หลังอัด</li><li>โลโก้, intro, องค์ประกอบที่ซ้ำทุกตอน</li><li>ข้อมูล YouTube Studio (ถ้าส่ง CSV มา)</li></ul></div>
+  </div>
+  <p style="margin-top:12px"><b>โหมดโค้ช:</b> ขอ "วิธีแก้และวิธีฝึก" จะได้แผนฝึก 4 สัปดาห์ จากนั้นส่งไฟล์อัดฝึกมาว่า "practice feedback ไฟล์ ..." จะได้ผลเทียบกับค่าเดิมและเป้าหมาย พร้อม % ที่พูดตรงบท</p>
+  <p style="margin-top:12px">สั่งว่า "วิเคราะห์ creator ให้หน่อย" จะได้รายงาน .md ใน <code>reports/</code> ซึ่งมีสรุป, เสน่ห์, จุดเด่น, จุดด้อย, ตัวเลข, แนวทาง 3 ระยะ, แผน 30 วัน และ KPI</p>
+</section>
+
+<section id="script">
+  <h2><span class="num">11</span>ฟังก์ชัน 7: เขียนสคริปต์ → Teleprompter</h2>
+  <p class="sub">ใช้ skill <code>action-story-channel-script</code> ของคุณเป็นกฎการเขียน แล้วต่อเข้ากับงานอัดและตัดต่อ</p>
+  <div class="grid2">
+    <div class="card"><h3>เขียน / ปรับสคริปต์</h3><ul><li>ใช้กฎจาก skill ของคุณ<b>เวอร์ชันล่าสุด</b>เสมอ (ชุดที่ sync จาก claude.ai)</li><li>บันทึกที่ <code>Agent-M/&lt;เรื่อง&gt;/&lt;topic&gt;_script_vN.md</code> โดยไม่เขียนทับเวอร์ชันเดิม</li><li><b>ความยาวค่าเริ่มต้น = ไม่จำกัด</b> ยาวตามความเข้มข้นของเรื่อง แต่ห้ามยืด (re-hook ทุก 5–8 นาที, ไม่พูดซ้ำ, recap สั้นทุก 15–20 นาที, มี chapters และจุดวางโฆษณา)</li><li>ถ้ากำหนดความยาว จะเทียบกับงบ: 20 นาที ≤ ~9,500 / 25 นาที ≤ ~12,500 / 30 นาที ≤ ~15,500 ตัวอักษร (นับแบบ <code>wc -m</code>)</li></ul></div>
+    <div class="card"><h3>Teleprompter</h3><ul><li>ดึงเฉพาะบทพูด ตัดบรรทัดตามจังหวะหายใจ ตัวเลขเป็นตัวหนาสีเหลือง</li><li>Space = เริ่ม/หยุด, ↑↓ = ความเร็ว, +/− = ขนาดตัวอักษร, M = กลับด้านสำหรับกระจก</li><li>ไฟล์ <code>&lt;เรื่อง&gt;_prompter.html</code> เปิดบนแท็บเล็ตหรือจอใต้เลนส์ได้เลย</li></ul></div>
+  </div>
+  <p style="margin-top:12px">สั่งว่า "เขียนสคริปต์เรื่อง …" หรือ "ทำ teleprompter จากสคริปต์ …" หรือใช้การ์ด 7 ในหน้าเว็บ</p>
+</section>
+
+<section id="examples">
+  <h2><span class="num">12</span>ตัวอย่างคำสั่ง</h2>
+  <p class="sub">พิมพ์ประมาณนี้ได้เลย ไม่ต้องจำชื่อเครื่องมือ</p>
+  <div class="table-wrap"><table>
+    <tr><th>อยากได้</th><th>พิมพ์</th></tr>
+    <tr><td>ลัพคัท</td><td>"ลัพคัทไฟล์ /path/clip.mp4 จังหวะ tight ใส่ punch-in"</td></tr>
+    <tr><td>หลายไฟล์ต่อกัน</td><td>"ลัพคัททุกไฟล์ในโฟลเดอร์ … เรียงตามชื่อไฟล์"</td></tr>
+    <tr><td>ตามสคริปต์</td><td>"ตัดตามสคริปต์นี้: …(วางสคริปต์)…"</td></tr>
+    <tr><td>คลิปสั้น</td><td>"ทำ Shorts 9:16 ยาว 45 วิจาก timeline roughcut v1"</td></tr>
+    <tr><td>ซับคลิปยาว</td><td>"ทำซับไทยให้ timeline roughcut v1"</td></tr>
+    <tr><td>ซับคลิปสั้น</td><td>"ใส่ซับเด้งแบบ pop ให้ timeline short v1 เน้นคำเยอะๆ"</td></tr>
+    <tr><td>B-roll จากคลังตัวเอง</td><td>"ใส่ B-roll จากโฟลเดอร์ … ช่วงที่พูดถึงเครื่องบิน"</td></tr>
+    <tr><td>B-roll อัตโนมัติ</td><td>"หาภาพประกอบมาใส่ให้ timeline roughcut v1 เน้นภาพข่าวเก่าจริง"</td></tr>
+    <tr><td>เพลง + SFX</td><td>"ใส่เพลงกับ SFX ตบมุกให้ timeline roughcut v1"</td></tr>
+    <tr><td>Export</td><td>"export timeline นี้เป็น YouTube 1080p ไว้ที่ ~/Desktop/export"</td></tr>
+    <tr><td>เช็คสถานะ</td><td>"เช็คสถานะ Resolve" / "ดูว่าใน timeline มีอะไรบ้าง"</td></tr>
+  </table></div>
+</section>
+
+<section id="tools">
+  <h2><span class="num">13</span>เครื่องมือทั้งหมด</h2>
+  <p class="sub">Claude เลือกใช้เครื่องมือเหล่านี้เอง ตารางนี้มีไว้ให้รู้ว่าระบบทำอะไรได้บ้าง</p>
+  <div class="table-wrap"><table>
+    <tr><th>กลุ่ม</th><th>เครื่องมือ</th><th>หน้าที่</th></tr>
+    <tr><td>สถานะ</td><td><code>resolve_status</code> <code>list_projects</code> <code>open_project</code> <code>save_project</code> <code>open_page</code></td><td>เช็คการเชื่อมต่อ, เปิด/บันทึกโปรเจกต์, สลับหน้า</td></tr>
+    <tr><td>Rough cut</td><td><code>analyze_speech</code> <code>refine_speech</code> <code>preview_rough_cut</code> <code>build_rough_cut</code></td><td>หาช่วงพูด/เงียบ/คำซ้ำ, หาขอบคำ, ฟังตัวอย่าง, สร้าง timeline</td></tr>
+    <tr><td>วิเคราะห์ไฟล์</td><td><code>probe_media</code> <code>list_media_folder</code> <code>transcribe</code> <code>export_frame_previews</code></td><td>ข้อมูลไฟล์, ถอดเสียง, ดึงภาพนิ่งมาดูเนื้อหา</td></tr>
+    <tr><td>ตัดต่อ</td><td><code>import_media</code> <code>build_timeline</code> <code>add_broll</code> <code>set_clip_transform</code> <code>add_transitions</code> <code>add_markers</code></td><td>นำเข้า, เรียงช็อต, B-roll, ซูม/ขยับ, transition, marker</td></tr>
+    <tr><td>ซับไตเติล</td><td><code>draft_captions</code> <code>preview_captions</code> <code>render_captions</code></td><td>ร่างซับจากเสียง, ภาพตัวอย่างบนเฟรมจริง, ใส่ซับลง timeline</td></tr>
+    <tr><td>ดูงาน</td><td><code>list_media_pool</code> <code>list_timelines</code> <code>timeline_info</code></td><td>ดูคลิปและโครงสร้าง timeline</td></tr>
+    <tr><td>B-roll</td><td><code>search_broll</code> <code>fetch_broll</code> <code>preview_broll</code> <code>place_broll</code></td><td>ค้นหาภาพตามสิทธิ์, ดาวน์โหลด, ภาพตัวอย่าง, เตรียม+วางบน track B-roll</td></tr>
+    <tr><td>เพลง + SFX</td><td><code>audio_library</code> <code>sfx_cue_map</code> <code>preview_audio_mix</code> <code>place_audio</code></td><td>วิเคราะห์คลังเสียง, หาจังหวะ, มิกซ์ตัวอย่าง, วางลง track Music/SFX</td></tr>
+    <tr><td>Look</td><td><code>list_looks</code> <code>preview_look</code> <code>apply_look</code> <code>reset_look</code></td><td>preset แต่งหน้า/สี, ภาพเทียบก่อน-หลัง, ใส่ทุกคลิป, ล้างสี</td></tr>
+    <tr><td>วิเคราะห์ creator</td><td><code>creator_footage_metrics</code> <code>script_digest</code> <code>practice_feedback</code></td><td>วัดการนำเสนอจากฟุตเทจ, สรุปโครงสคริปต์, ฟีดแบ็กไฟล์ฝึก</td></tr>
+    <tr><td>สคริปต์</td><td><code>make_prompter</code></td><td>สร้าง teleprompter จากสคริปต์ + นับความยาวจริง</td></tr>
+    <tr><td>Export</td><td><code>list_render_presets</code> <code>render</code> <code>render_status</code></td><td>สั่ง render และติดตามสถานะ</td></tr>
+  </table></div>
+</section>
+
+<section id="trouble">
+  <h2><span class="num">14</span>แก้ปัญหา</h2>
+  <p class="sub">อาการที่เจอบ่อยและวิธีแก้</p>
+  <details open><summary>Claude บอกว่า "เชื่อมต่อ DaVinci Resolve ไม่ได้"</summary>
+    <p>Bridge ยังไม่ได้เปิด ให้ไปที่ Workspace › Scripts › DaVinci Bot Bridge แล้วสั่งใหม่ ต้องเปิดโปรเจกต์ไว้ด้วย</p></details>
+  <details><summary>ไม่เห็น DaVinci Bot Bridge ในเมนู Scripts</summary>
+    <p>รัน <code>./install_bridge.sh</code> ในโฟลเดอร์โปรเจกต์ แล้วเปิดเมนูใหม่ เวอร์ชันฟรีจะแสดงเฉพาะสคริปต์ Lua (.lua) ไม่แสดงไฟล์ .py</p></details>
+  <details><summary>Claude มองไม่เห็นเครื่องมือ davinci-bot</summary>
+    <p>เปิด session ใหม่ แล้วรัน <code>claude mcp get davinci-bot</code> ใน Terminal ต้องขึ้น ✔ Connected</p></details>
+  <details><summary>วิเคราะห์ไฟล์ครั้งแรกช้า</summary>
+    <p>ปกติจะใช้เวลาประมาณ 1/3 ของความยาวไฟล์ (ฟุตเทจ 1 ชั่วโมงราว 20 นาที) เพราะถอดเสียงทีละช่วงด้วย Whisper large-v3 ครั้งต่อไปจะเร็วเพราะใช้ cache</p></details>
+  <details><summary>ใช้หลาย session พร้อมกัน</summary>
+    <p>ทำได้ คำสั่งจะเข้าคิวทีละคำสั่ง ถ้าอีก session กำลังทำงานยาวอยู่ ฝั่งนี้จะรอจนถึงคิว ไม่ต้องกดเปิด Bridge ซ้ำ (ถ้ากดซ้ำ ตัวใหม่จะแทนที่ตัวเก่าโดยอัตโนมัติ)</p></details>
+  <details><summary>Error "timeline already exists"</summary>
+    <p>ระบบไม่เขียนทับ timeline เดิม ให้ตั้งชื่อใหม่ เช่น v2</p></details>
+  <details><summary>มี warning เรื่อง J/L cut ("mouth may move")</summary>
+    <p>ระยะ J/L กินเข้าไปในช่วงที่ผู้พูดกำลังพูดประโยคอื่น ให้ลดจำนวนเฟรมหรือเปลี่ยนเป็นตัดชนธรรมดา</p></details>
+  <details><summary>ซับหรือคำในแผนสะกดผิด</summary>
+    <p>Whisper ฟังคำในช่วงสั้น ๆ ผิดได้บ้าง Claude จะเทียบกับบทถอดเสียงทั้งไฟล์ให้ แต่ถ้ายังผิด ให้แก้ข้อความซับใน Resolve ได้เลย</p></details>
+</section>
+
+<footer>
+  ไฟล์โปรเจกต์: <code>~/Desktop/Project/davinci-bot</code> · ไฟล์สื่อสาร: <code>~/Library/Application Support/davinci-bot/ipc</code> · cache และ preview: <code>~/.cache/davinci-bot</code>
+</footer>
+
+</div>
+</body>
+</html>

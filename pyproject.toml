@@ -1,0 +1,13 @@
+[project]
+name = "davinci-bot"
+version = "0.1.0"
+description = "MCP server that lets Claude edit in DaVinci Resolve (free edition)"
+requires-python = ">=3.10"
+dependencies = [
+    "claude-agent-sdk>=0.2.165",
+    "httpx>=0.28.1",
+    "mcp>=2.3",
+    "numpy>=2.2.6",
+    "pillow>=12.3.0",
+    "pythainlp>=5.4.0",
+]

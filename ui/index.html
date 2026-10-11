@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DaVinci Bot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<style>
+:root {
+  --bg: #121214; --panel: #1a1a1e; --panel-2: #222228; --line: #2e2e36; --text: #e9e8e4; --muted: #9a99a2;
+  --accent: #f08a3c; --accent-2: #ffb36b; --ok: #3fbf7f; --warn: #e6b33d; --bad: #e5534b; --user: #2b3a55;
+  --code: #0d0d10;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.65 "IBM Plex Sans Thai", system-ui, sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.app { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+header { display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.brand { font-family: "JetBrains Mono", monospace; font-weight: 600; letter-spacing: .02em; }
+.brand b { color: var(--accent); }
+.pill { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); font-size: 13px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.dot.idle { background: var(--ok); } .dot.busy { background: var(--warn); } .dot.dead { background: var(--bad); }
+.spacer { flex: 1; }
+#chatTitle { color: var(--muted); font-size: 13.5px; max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.tabs button { flex: 1; background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 6px; cursor: pointer; color: var(--muted); }
+.tabs button.on { background: var(--panel-2); color: var(--text); border-color: var(--accent); }
+#histSearch { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; margin-bottom: 10px; }
+.hitem { display: grid; grid-template-columns: 1fr auto; gap: 4px; padding: 9px 10px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; }
+.hitem:hover { background: var(--panel-2); }
+.hitem.on { background: var(--panel-2); border-color: var(--accent); }
+.hitem .ht { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hitem .hd { font-size: 12px; color: var(--muted); grid-column: 1; }
+.hitem .ha { grid-row: 1 / span 2; grid-column: 2; display: none; gap: 2px; align-items: center; }
+.hitem:hover .ha { display: flex; }
+.hitem .ha button { background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px 5px; border-radius: 6px; }
+.hitem .ha button:hover { color: var(--text); background: var(--line); }
+.hempty { color: var(--muted); font-size: 13.5px; padding: 10px; }
+.msg.user { display: flex; flex-direction: column; align-items: flex-end; }
+.editbtn { font-size: 12px; color: var(--muted); background: none; border: none; cursor: pointer; padding: 2px 4px; margin-top: 2px; visibility: hidden; }
+.msg.user:hover .editbtn { visibility: visible; }
+.editbox { width: min(80%, 620px); display: grid; gap: 6px; }
+.editbox textarea { background: var(--bg); border: 1px solid var(--accent); border-radius: 12px; padding: 10px 12px; min-height: 70px; resize: vertical; }
+.editbox div { display: flex; gap: 8px; justify-content: flex-end; }
+.editnote { font-size: 12px; color: var(--muted); }
+.btn { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #1b1109; font-weight: 600; }
+.btn.danger:hover { border-color: var(--bad); color: var(--bad); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+main { display: grid; grid-template-columns: 330px 1fr; min-height: 0; }
+aside { border-right: 1px solid var(--line); overflow-y: auto; padding: 14px; background: var(--panel); }
+aside h2 { font-size: 13px; color: var(--muted); font-weight: 500; margin: 4px 4px 10px; letter-spacing: .04em; }
+.card { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; background: var(--panel-2); overflow: hidden; }
+.card summary { list-style: none; cursor: pointer; padding: 11px 14px; display: flex; gap: 10px; align-items: center; }
+.card summary::-webkit-details-marker { display: none; }
+.card .num { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: #2c241d; color: var(--accent-2); font-weight: 600; font-size: 13px; flex: none; }
+.card .t { font-weight: 600; }
+.card .d { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.card form { padding: 4px 14px 14px; display: grid; gap: 8px; }
+.card label { font-size: 12.5px; color: var(--muted); display: grid; gap: 4px; }
+.card input[type=text], .card select, .card textarea { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; width: 100%; }
+.card textarea { min-height: 54px; resize: vertical; }
+.row { display: flex; gap: 8px; } .row > * { flex: 1; }
+.check { display: flex !important; flex-direction: row; align-items: center; gap: 8px !important; color: var(--text) !important; }
+.chat { display: grid; grid-template-rows: 1fr auto; min-height: 0; }
+#log { overflow-y: auto; padding: 22px max(16px, calc((100% - 860px) / 2)); }
+.msg { margin-bottom: 18px; }
+.msg.user .bubble { background: var(--user); margin-left: auto; max-width: 80%; border-radius: 14px 14px 4px 14px; padding: 10px 14px; white-space: pre-wrap; width: fit-content; }
+.msg.bot .bubble { background: transparent; }
+.msg.bot .bubble :is(h1,h2,h3) { font-size: 1.05em; margin: 1em 0 .4em; }
+.msg.bot .bubble p { margin: .45em 0; }
+.msg.bot .bubble table { border-collapse: collapse; margin: .6em 0; font-size: 14px; display: block; overflow-x: auto; }
+.msg.bot .bubble th, .msg.bot .bubble td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; vertical-align: top; }
+.msg.bot .bubble th { background: var(--panel-2); }
+.msg.bot .bubble code { font-family: "JetBrains Mono", monospace; font-size: 13px; background: var(--code); padding: 1px 5px; border-radius: 5px; }
+.msg.bot .bubble pre { background: var(--code); padding: 10px; border-radius: 8px; overflow-x: auto; }
+.msg.bot .bubble pre code { background: none; padding: 0; }
+.msg.bot .bubble a { color: var(--accent-2); }
+.tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.chip { font-size: 12.5px; padding: 3px 10px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); }
+.chip.run { border-color: var(--warn); color: var(--warn); }
+.chip.ok { border-color: #2f5f47; color: var(--ok); }
+.chip.err { border-color: var(--bad); color: var(--bad); }
+.media { display: grid; gap: 10px; margin-top: 10px; }
+.media img { max-width: 100%; border-radius: 10px; border: 1px solid var(--line); cursor: zoom-in; display: block; }
+.media audio, .media video { width: 100%; max-width: 560px; }
+.filelink { display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); color: var(--text); text-decoration: none; width: fit-content; }
+.filelink:hover { border-color: var(--accent); }
+.composer { border-top: 1px solid var(--line); padding: 12px max(16px, calc((100% - 860px) / 2)); background: var(--panel); }
+.composer form { display: flex; gap: 10px; align-items: flex-end; }
+#input { flex: 1; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-height: 46px; max-height: 220px; resize: none; }
+#input:focus { outline: none; border-color: var(--accent); }
+.hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.empty { color: var(--muted); text-align: center; margin-top: 12vh; }
+.empty .big { font-family: "JetBrains Mono", monospace; font-size: 28px; color: var(--text); }
+.typing::after { content: "▍"; animation: blink 1s steps(1) infinite; color: var(--accent); }
+@keyframes blink { 50% { opacity: 0; } }
+dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 14px; max-width: 620px; width: 92vw; padding: 20px; }
+dialog::backdrop { background: rgba(0,0,0,.6); }
+dialog pre { background: var(--code); padding: 10px; border-radius: 8px; max-height: 300px; overflow: auto; font-size: 12.5px; white-space: pre-wrap; }
+.lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: none; place-items: center; z-index: 9; cursor: zoom-out; }
+.lightbox img { max-width: 96vw; max-height: 94vh; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } aside { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">&lt;<b>DaVinci</b>-Bot&gt;</div>
+    <div class="pill" id="statusPill" title=""><span class="dot" id="statusDot"></span><span id="statusText">กำลังเช็ค Resolve…</span></div>
+    <div id="chatTitle"></div>
+    <div class="spacer"></div>
+    <button class="btn danger" id="stopBtn" disabled>หยุด</button>
+    <button class="btn" id="newBtn">แชทใหม่</button>
+    <button class="btn" id="quitBtn" title="ปิดเซิร์ฟเวอร์ของแอป">ปิดแอป</button>
+  </header>
+  <main>
+    <aside>
+      <div class="tabs"><button id="tabBtnFns" class="on">ฟังก์ชัน</button><button id="tabBtnHist">ประวัติแชท</button></div>
+      <div id="tabHist" hidden>
+        <input id="histSearch" type="text" placeholder="ค้นหาแชท…">
+        <div id="histList"></div>
+      </div>
+      <div id="tabFns">
+      <h2>ฟังก์ชัน</h2>
+      <details class="card"><summary><span class="num">1</span><span><div class="t">Rough cut</div><div class="d">ตัดช่วงเงียบ คำซ้ำ พูดผิด เลือกเทคที่ดีที่สุด</div></span></summary>
+        <form data-fn="roughcut">
+          <label>ไฟล์หรือโฟลเดอร์ฟุตเทจ<input type="text" name="path" placeholder="~/Desktop/Agent-M/DB Cooper/footage" required></label>
+          <div class="row">
+            <label>จังหวะ<select name="pace"><option value="natural">natural</option><option value="tight">tight</option><option value="relaxed">relaxed</option></select></label>
+            <label>ขนาด<select name="size"><option value="">ตามต้นฉบับ</option><option value="1080x1920">9:16 Shorts</option><option value="1920x1080">16:9</option></select></label>
+          </div>
+          <label class="check"><input type="checkbox" name="punch" checked> punch-in 110%</label>
+          <label class="check"><input type="checkbox" name="lcut" checked> L-cut ตอนขึ้นประโยคใหม่</label>
+          <label>หมายเหตุเพิ่ม<textarea name="note" placeholder="เช่น มีสคริปต์ที่ … / ความยาวเป้าหมาย"></textarea></label>
+          <button class="btn primary">เริ่ม</button>
+        </form></details>
+      <details class="card"><summary><span class="num">2</span><span><div class="t">ซับไตเติล</div><div class="d">ซับไทยตามบริบท คลิปยาว / คลิปสั้นแบบเด้ง</div></span></summary>
+        <form data-fn="subs">
+          <label>Timeline<select name="timeline" class="tlSelect"></select></label>
+          <div class="row">
+            <label>ประเภท<select name="mode"><option value="short">คลิปสั้น</option><option value="long">คลิปยาว</option></select></label>
+            <label>สไตล์<select name="style"><option value="">แนะนำ</option><option>pop</option><option>karaoke</option><option>box</option><option>clean</option></select></label>
+          </div>
+          <label>คำเฉพาะที่ต้องสะกดให้ถูก<textarea name="note" placeholder="ชื่อคน สถานที่ ตัวเลข"></textarea></label>
+          <button class="btn primary">เริ่ม</button>
+        </form></details>
+      <details class="card"><summary><span class="num">3</span><span><div class="t">B-roll / Insert</div><div class="d">หาภาพ ฟุตเทจ ภาพเก่า มีม มาใส่ประกอบ</div></span></summary>
+        <form data-fn="broll">
+          <label>Timeline<select name="timeline" class="tlSelect"></select></label>
+          <div class="row">
+            <label>ความถี่<select name="freq"><option value="">แนะนำ</option><option>ทุก 3 วินาที</option><option>ทุก 6 วินาที</option><option>ทุก 10 วินาที</option></select></label>
+            <label>เน้น<select name="kind"><option value="">ผสม</option><option>ภาพจริง/ข่าวเก่า</option><option>stock สวยๆ</option></select></label>
+          </div>
+          <label class="check"><input type="checkbox" name="meme"> อนุญาตมีม</label>
+          <label>หมายเหตุเพิ่ม<textarea name="note" placeholder="เช่น ใช้โฟลเดอร์ B-roll ของฉันก่อน"></textarea></label>
+          <button class="btn primary">เริ่ม</button>
+        </form></details>
+      <details class="card"><summary><span class="num">4</span><span><div class="t">เพลง + SFX</div><div class="d">หาจังหวะตบมุก กระแทกอารมณ์ ลุ้น</div></span></summary>
+        <form data-fn="audio">
+          <label>Timeline<select name="timeline" class="tlSelect"></select></label>
+          <div class="row">
+            <label>โทน<select name="tone"><option value="">ให้ AI เลือก</option><option>ลุ้น/ลึกลับ</option><option>บู๊/เร้าใจ</option><option>ตลก</option><option>จริงจัง/โศกนาฏกรรม</option></select></label>
+            <label>SFX<select name="density"><option value="">แนะนำ</option><option>น้อย</option><option>ปานกลาง</option><option>เยอะ</option></select></label>
+          </div>
+          <label>หมายเหตุเพิ่ม<textarea name="note"></textarea></label>
+          <button class="btn primary">เริ่ม</button>
+        </form></details>
+      <details class="card"><summary><span class="num">5</span><span><div class="t">หน้าใส / Look</div><div class="d">preset ผิวเนียนใส หรือ LUT</div></span></summary>
+        <form data-fn="look">
+          <label>Timeline<select name="timeline" class="tlSelect"></select></label>
+          <label>Look<select name="look" id="lookSelect"></select></label>
+          <button class="btn primary">ดูภาพเทียบก่อน</button>
+        </form></details>
+      <details class="card"><summary><span class="num">6</span><span><div class="t">วิเคราะห์ / โค้ช</div><div class="d">วิเคราะห์ creator หรือฟีดแบ็กไฟล์ฝึก</div></span></summary>
+        <form data-fn="coach">
+          <label>ทำอะไร<select name="what"><option value="feedback">ฟีดแบ็กไฟล์ฝึก</option><option value="analysis">วิเคราะห์ creator ใหม่ (เทียบรอบก่อน)</option></select></label>
+          <label>ไฟล์หรือโฟลเดอร์<input type="text" name="path" placeholder="~/Desktop/practice/week1.mp4"></label>
+          <label class="check"><input type="checkbox" name="std" checked> เทียบกับบททดสอบมาตรฐาน</label>
+          <button class="btn primary">เริ่ม</button>
+        </form></details>
+      <details class="card"><summary><span class="num">7</span><span><div class="t">เขียนสคริปต์</div><div class="d">สคริปต์เรื่องจริงแนวบู๊/ปริศนา → teleprompter</div></span></summary>
+        <form data-fn="script">
+          <label>ทำอะไร<select name="what"><option value="write">เขียนสคริปต์ใหม่</option><option value="live">สคริปต์ไลฟ์ (beat-sheet)</option><option value="prompter">ทำ teleprompter จากสคริปต์ที่มี</option><option value="revise">ปรับสคริปต์ที่มี</option></select></label>
+          <label>เรื่อง / path สคริปต์<input type="text" name="topic" placeholder="เช่น ปฏิบัติการช่วยทีมหมูป่า หรือ ~/Desktop/Agent-M/MH370/mh370_script_v2.md" required></label>
+          <div class="row">
+            <label>ความยาว<select name="len"><option value="">ไม่จำกัด (ตามความเข้มข้น)</option><option>15 นาที</option><option>20 นาที</option><option>25 นาที</option><option>30 นาที</option><option>45 นาที</option><option>60 นาที</option></select></label>
+            <label>โทน<select name="tone"><option value="">ให้ AI เลือกโหมด</option><option>ปฏิบัติการ/ภารกิจ</option><option>หนี/เอาชีวิตรอด</option><option>ไล่ล่า</option><option>รุ่งเรือง→ล่มสลาย</option><option>ปริศนาที่ยังไม่คลี่คลาย</option></select></label>
+          </div>
+          <label class="check"><input type="checkbox" name="briefing"> ทำ briefing ประกอบ</label>
+          <label class="check"><input type="checkbox" name="appendix"> ภาคผนวกรูป/ฟุตเทจ</label>
+          <label class="check"><input type="checkbox" name="prompter" checked> สร้าง teleprompter เมื่อเสร็จ</label>
+          <label>หมายเหตุเพิ่ม<textarea name="note" placeholder="มุมเล่า แหล่งข้อมูล คลิปอ้างอิง"></textarea></label>
+          <button class="btn primary">เริ่ม</button>
+        </form></details>
+      <h2 style="margin-top:18px">ลัด</h2>
+      <div style="display:grid;gap:8px">
+        <button class="btn quick" data-q="เช็คสถานะ Resolve และบอกว่าตอนนี้อยู่ timeline ไหน มีอะไรบ้าง">เช็คสถานะ Resolve</button>
+        <button class="btn quick" data-q="export timeline ปัจจุบันเป็น YouTube 1080p ไว้ที่ ~/Desktop/export">Export YouTube 1080p</button>
+        <button class="btn quick" data-q="เปิดแผนฝึก reports/training-plan-2026-10-11.md แล้วบอกว่าสัปดาห์นี้ต้องฝึกอะไร">แผนฝึกสัปดาห์นี้</button>
+      </div>
+      </div>
+    </aside>
+    <section class="chat">
+      <div id="log"><div class="empty" id="empty"><div class="big">&lt;DaVinci-Bot&gt;</div><p>เลือกฟังก์ชันทางซ้าย หรือพิมพ์สั่งงานได้เลย<br>เช่น "ลัพคัทไฟล์ … แล้วใส่ซับแบบ pop"</p></div></div>
+      <div class="composer">
+        <form id="composer">
+          <textarea id="input" rows="1" placeholder="พิมพ์คำสั่ง… (Enter ส่ง, Shift+Enter ขึ้นบรรทัดใหม่)"></textarea>
+          <button class="btn primary" id="sendBtn">ส่ง</button>
+        </form>
+        <div class="hint" id="hint">Resolve ต้องเปิด Workspace › Scripts › DaVinci Bot Bridge ไว้</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="permDlg">
+  <h3 style="margin-top:0">ขออนุญาตใช้คำสั่ง</h3>
+  <p id="permTool"></p>
+  <pre id="permInput"></pre>
+  <div style="display:flex;gap:10px;justify-content:flex-end">
+    <button class="btn" id="permNo">ไม่อนุญาต</button>
+    <button class="btn primary" id="permYes">อนุญาต</button>
+  </div>
+</dialog>
+<div class="lightbox" id="lightbox"><img alt=""></div>
+
+<script>
+const TOKEN = "__TOKEN__";
+const H = { "Content-Type": "application/json", "X-DVB-Token": TOKEN };
+const $ = (s) => document.querySelector(s);
+const log = $("#log");
+let botEl = null, botText = "", toolsEl = null, busy = false, permQueue = [];
+
+function esc(s) { return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function md(text) {
+  try { return DOMPurify.sanitize(marked.parse(text)); } catch { return "<p>" + esc(text).replace(/\n/g, "<br>") + "</p>"; }
+}
+function scrollDown() { log.scrollTop = log.scrollHeight; }
+function addMsg(kind, html) {
+  $("#empty")?.remove();
+  const m = document.createElement("div"); m.className = "msg " + kind;
+  m.innerHTML = `<div class="bubble">${html}</div>`;
+  log.appendChild(m); scrollDown(); return m;
+}
+function fileUrl(p) { return "/api/file?t=" + encodeURIComponent(TOKEN) + "&path=" + encodeURIComponent(p); }
+function mediaFor(text) {
+  const exts = "jpg|jpeg|png|webp|mp3|wav|m4a|mp4|md|srt|txt|html";
+  const found = new Set();
+  for (const m of text.matchAll(new RegExp("`((?:/|~/)[^`\\n]+?\\.(" + exts + "))`", "gi"))) found.add(m[1]);
+  for (const m of text.matchAll(new RegExp("((?:/Users/|~/)[^\\s`'\"<>()\\]]+?\\.(" + exts + "))(?=[\\s`'\"<>()\\],.]|$)", "gi"))) found.add(m[1]);
+  const box = document.createElement("div"); box.className = "media";
+  for (const p of found) {
+    const ext = p.split(".").pop().toLowerCase(); const url = fileUrl(p);
+    let el;
+    if (["jpg","jpeg","png","webp"].includes(ext)) { el = document.createElement("img"); el.src = url; el.loading = "lazy"; el.onclick = () => openLight(url); }
+    else if (["mp3","wav","m4a"].includes(ext)) { el = document.createElement("audio"); el.controls = true; el.src = url; }
+    else if (ext === "mp4") { el = document.createElement("video"); el.controls = true; el.src = url; }
+    else { el = document.createElement("a"); el.className = "filelink"; el.href = url; el.target = "_blank"; el.textContent = (ext === "html" ? "🎬 เปิด " : "📄 ") + p.split("/").pop(); }
+    el.onerror = () => el.remove();
+    box.appendChild(el);
+  }
+  return found.size ? box : null;
+}
+function openLight(url) { const lb = $("#lightbox"); lb.querySelector("img").src = url; lb.style.display = "grid"; }
+$("#lightbox").onclick = () => $("#lightbox").style.display = "none";
+
+function ensureBot() {
+  if (!botEl) { botEl = addMsg("bot", ""); toolsEl = null; botText = ""; }
+  return botEl;
+}
+function renderBot(final) {
+  const b = ensureBot().querySelector(".bubble");
+  let textDiv = b.querySelector(".txt");
+  if (!textDiv) { textDiv = document.createElement("div"); textDiv.className = "txt"; b.appendChild(textDiv); }
+  textDiv.innerHTML = md(botText);
+  textDiv.classList.toggle("typing", !final);
+  if (final) { const m = mediaFor(botText); b.querySelector(".media")?.remove(); if (m) b.appendChild(m); }
+  scrollDown();
+}
+function setBusy(v) {
+  busy = v; $("#sendBtn").disabled = v; $("#stopBtn").disabled = !v;
+  document.querySelectorAll("aside .btn.primary, .quick").forEach(b => b.disabled = v);
+  if (!v && botEl) { renderBot(true); botEl = null; }
+}
+
+// ---------- chat history ----------
+let currentId = null;
+function ago(ms) {
+  const d = (Date.now() - ms) / 1000;
+  if (d < 60) return "เมื่อสักครู่"; if (d < 3600) return Math.floor(d / 60) + " นาทีที่แล้ว";
+  if (d < 86400) return Math.floor(d / 3600) + " ชั่วโมงที่แล้ว";
+  return new Date(ms).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+async function loadHistory() {
+  const q = $("#histSearch").value.trim();
+  const r = await (await fetch("/api/sessions?q=" + encodeURIComponent(q), { headers: H })).json();
+  const list = $("#histList"); list.innerHTML = "";
+  if (!r.items.length) { list.innerHTML = `<div class="hempty">${q ? "ไม่พบแชทที่ตรงกับคำค้น" : "ยังไม่มีแชท แชทใหม่จะถูกบันทึกให้อัตโนมัติ"}</div>`; return; }
+  for (const it of r.items) {
+    const el = document.createElement("div"); el.className = "hitem" + (it.id === currentId ? " on" : "");
+    el.innerHTML = `<div class="ht">${esc(it.title)}</div><div class="hd">${ago(it.updated)}</div>
+      <div class="ha"><button title="เปลี่ยนชื่อ" data-a="ren">✎</button><button title="ลบ" data-a="del">🗑</button></div>`;
+    el.onclick = async (e) => {
+      const a = e.target.dataset.a;
+      if (a === "ren") { e.stopPropagation(); const t = prompt("ชื่อแชทใหม่", it.title); if (t) { await post("/api/rename", { id: it.id, title: t }); loadHistory(); if (it.id === currentId) $("#chatTitle").textContent = t; } return; }
+      if (a === "del") { e.stopPropagation(); if (confirm(`ลบแชท "${it.title}" ถาวร?`)) { await post("/api/delete", { id: it.id }); if (it.id === currentId) newChatView(); loadHistory(); } return; }
+      openChat(it.id, it.title);
+    };
+    list.appendChild(el);
+  }
+}
+async function post(url, body) { return fetch(url, { method: "POST", headers: H, body: JSON.stringify(body) }); }
+function newChatView() { currentId = null; $("#chatTitle").textContent = ""; log.innerHTML = ""; botEl = null; addMsg("bot", "<p>เริ่มแชทใหม่แล้ว</p>"); }
+function userBubble(text, forkFrom, uuid) {
+  const m = addMsg("user", esc(text));
+  if (currentId && uuid) {
+    const b = document.createElement("button"); b.className = "editbtn"; b.textContent = "✎ แก้ไขแล้วส่งใหม่";
+    b.onclick = () => startEdit(m, text, forkFrom); m.appendChild(b);
+  }
+  return m;
+}
+function botBlocks(blocks) {
+  const m = addMsg("bot", ""); const b = m.querySelector(".bubble"); let chips = null;
+  for (const x of blocks) {
+    if (x.tool) {
+      if (!chips || chips !== b.lastElementChild) { chips = document.createElement("div"); chips.className = "tools"; b.appendChild(chips); }
+      const c = document.createElement("span"); c.className = "chip " + (x.error ? "err" : "ok"); c.textContent = (x.error ? "✕ " : "✓ ") + x.label; chips.appendChild(c);
+    } else {
+      const d = document.createElement("div"); d.innerHTML = md(x.text); const media = mediaFor(x.text); if (media) d.appendChild(media); b.appendChild(d);
+    }
+  }
+}
+function renderTranscript(items) {
+  log.innerHTML = ""; botEl = null;
+  for (const it of items) { if (it.role === "user") userBubble(it.text, it.fork_from, it.uuid); else botBlocks(it.blocks); }
+  scrollDown();
+}
+async function openChat(id, title) {
+  if (busy) return alert("รอให้คำสั่งปัจจุบันเสร็จก่อน");
+  const r = await post("/api/open", { id });
+  if (!r.ok) return alert("เปิดแชทไม่ได้");
+  const j = await r.json(); currentId = j.id; $("#chatTitle").textContent = title || "";
+  renderTranscript(j.items); loadHistory();
+}
+function startEdit(m, text, forkFrom) {
+  if (busy) return;
+  const box = document.createElement("div"); box.className = "editbox";
+  box.innerHTML = `<textarea></textarea><div><span class="editnote">จะแตกเป็นแชทใหม่จากจุดนี้ แชทเดิมยังอยู่ครบ</span><button class="btn">ยกเลิก</button><button class="btn primary">ส่ง</button></div>`;
+  box.querySelector("textarea").value = text; m.replaceWith(box); box.querySelector("textarea").focus();
+  box.querySelector(".btn:not(.primary)").onclick = () => box.replaceWith(m);
+  box.querySelector(".btn.primary").onclick = async () => {
+    const t = box.querySelector("textarea").value.trim(); if (!t) return;
+    const r = await post("/api/edit", { id: currentId, fork_from: forkFrom, text: t });
+    if (!r.ok) { alert("แก้ไขไม่ได้ (" + r.status + ")"); box.replaceWith(m); return; }
+    const j = await r.json(); currentId = j.id; renderTranscript(j.items); addMsg("user", esc(t)); botEl = null;
+    $("#chatTitle").textContent = "(แก้ไข) " + t.slice(0, 40);
+  };
+}
+$("#tabBtnFns").onclick = () => { $("#tabFns").hidden = false; $("#tabHist").hidden = true; $("#tabBtnFns").classList.add("on"); $("#tabBtnHist").classList.remove("on"); };
+$("#tabBtnHist").onclick = () => { $("#tabFns").hidden = true; $("#tabHist").hidden = false; $("#tabBtnHist").classList.add("on"); $("#tabBtnFns").classList.remove("on"); loadHistory(); };
+let searchT; $("#histSearch").oninput = () => { clearTimeout(searchT); searchT = setTimeout(loadHistory, 250); };
+
+const es = new EventSource("/api/events?t=" + encodeURIComponent(TOKEN));
+es.onmessage = (e) => {
+  const ev = JSON.parse(e.data);
+  if (ev.type === "user") { addMsg("user", esc(ev.text)); botEl = null; }
+  else if (ev.type === "delta") { botText += ev.text; renderBot(false); }
+  else if (ev.type === "text") { /* full block already streamed; keep separation between blocks */ if (!botText.endsWith("\n\n")) botText += "\n\n"; renderBot(false); }
+  else if (ev.type === "tool") {
+    const b = ensureBot().querySelector(".bubble");
+    if (!toolsEl || toolsEl !== b.lastElementChild) { toolsEl = document.createElement("div"); toolsEl.className = "tools"; b.appendChild(toolsEl); }
+    const c = document.createElement("span"); c.className = "chip run"; c.id = "tool-" + ev.id; c.textContent = "⚙ " + ev.label; toolsEl.appendChild(c);
+    // text after the tool goes into a new block
+    const t = b.querySelector(".txt"); if (t) { t.classList.remove("txt"); t.innerHTML = md(botText); const m = mediaFor(botText); if (m) t.appendChild(m); } botText = "";
+    scrollDown();
+  }
+  else if (ev.type === "tool_done") { const c = document.getElementById("tool-" + ev.id); if (c) { c.className = "chip " + (ev.error ? "err" : "ok"); c.textContent = (ev.error ? "✕ " : "✓ ") + c.textContent.slice(2); } }
+  else if (ev.type === "permission") { permQueue.push(ev); showPerm(); }
+  else if (ev.type === "error") { addMsg("bot", `<p style="color:var(--bad)">เกิดข้อผิดพลาด: ${esc(ev.message)}</p>`); }
+  else if (ev.type === "done" && ev.session_id) {
+    const first = !currentId; currentId = ev.session_id;
+    setTimeout(async () => {
+      const r = await fetch("/api/view?id=" + encodeURIComponent(currentId), { headers: H });
+      if (r.ok && !busy) { const j = await r.json(); renderTranscript(j.items); $("#chatTitle").textContent = j.title; }
+      if (!$("#tabHist").hidden || first) loadHistory();
+    }, 300);
+  }
+  else if (ev.type === "busy") setBusy(ev.busy);
+  else if (ev.type === "reset") { newChatView(); if (!$("#tabHist").hidden) loadHistory(); }
+};
+
+function showPerm() {
+  const d = $("#permDlg"); if (d.open || !permQueue.length) return;
+  const ev = permQueue[0];
+  $("#permTool").innerHTML = `Claude ต้องการใช้ <code>${esc(ev.tool)}</code>`;
+  $("#permInput").textContent = ev.input; d.showModal();
+}
+async function answerPerm(allow) {
+  const ev = permQueue.shift(); $("#permDlg").close();
+  await fetch("/api/permission", { method: "POST", headers: H, body: JSON.stringify({ id: ev.id, allow }) });
+  showPerm();
+}
+$("#permYes").onclick = () => answerPerm(true);
+$("#permNo").onclick = () => answerPerm(false);
+
+async function send(text) {
+  if (!text.trim() || busy) return;
+  const r = await fetch("/api/send", { method: "POST", headers: H, body: JSON.stringify({ text }) });
+  if (!r.ok) addMsg("bot", `<p style="color:var(--bad)">ส่งไม่ได้ (${r.status})</p>`);
+}
+const input = $("#input");
+input.addEventListener("input", () => { input.style.height = "auto"; input.style.height = Math.min(220, input.scrollHeight) + "px"; });
+input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("#composer").requestSubmit(); } });
+$("#composer").onsubmit = (e) => { e.preventDefault(); const t = input.value; input.value = ""; input.style.height = "auto"; send(t); };
+$("#stopBtn").onclick = () => fetch("/api/interrupt", { method: "POST", headers: H });
+$("#newBtn").onclick = () => fetch("/api/new", { method: "POST", headers: H });
+$("#quitBtn").onclick = async () => { if (confirm("ปิดแอป DaVinci Bot?")) { await fetch("/api/shutdown", { method: "POST", headers: H }); document.body.innerHTML = "<p style='padding:40px'>ปิดแอปแล้ว เปิดใหม่ได้จากไอคอน DaVinci Bot</p>"; } };
+document.querySelectorAll(".quick").forEach(b => b.onclick = () => send(b.dataset.q));
+
+const PROMPTS = {
+  roughcut: f => `ทำ rough cut (ฟังก์ชัน 1) จาก ${f.path} จังหวะ ${f.pace}${f.size ? ", ขนาด " + f.size : ""}${f.punch ? ", ใส่ punch-in 110%" : ", ไม่ใส่ punch-in"}${f.lcut ? ", ใช้ L-cut ตอนขึ้นประโยคใหม่" : ""}. ${f.note || ""}`,
+  subs: f => `ใส่ซับไตเติล (ฟังก์ชัน 2) ให้ timeline "${f.timeline}" แบบ${f.mode === "short" ? "คลิปสั้น" : "คลิปยาว"}${f.style ? " สไตล์ " + f.style : ""}. ${f.note ? "คำเฉพาะ: " + f.note : ""}`,
+  broll: f => `ใส่ B-roll / insert (ฟังก์ชัน 3) ให้ timeline "${f.timeline}"${f.freq ? " " + f.freq : ""}${f.kind ? " เน้น" + f.kind : ""}, ${f.meme ? "ใส่มีมได้" : "ไม่เอามีม"}. ${f.note || ""}`,
+  audio: f => `ใส่เพลงประกอบและ SFX (ฟังก์ชัน 4) ให้ timeline "${f.timeline}"${f.tone ? " โทน" + f.tone : ""}${f.density ? " SFX " + f.density : ""}. ${f.note || ""}`,
+  look: f => `ใส่ look "${f.look}" (ฟังก์ชัน 5) ให้ timeline "${f.timeline}" — ทำภาพเทียบก่อน/หลังให้ดูก่อน แล้วรอฉันอนุมัติ`,
+  script: f => f.what === "prompter"
+    ? `สร้าง teleprompter (ฟังก์ชัน 7) จากสคริปต์ ${f.topic} แล้วบอกความยาวบทพูดจริงเทียบงบ`
+    : f.what === "revise"
+    ? `ปรับสคริปต์ ${f.topic} (ฟังก์ชัน 7) ตามกฎล่าสุดของ action-story-channel-script${f.len ? " ให้ยาวราว " + f.len : " ความยาวไม่จำกัด (ห้ามตัดเพราะยาว แต่ตัดส่วนที่ยืด)"} เก็บเป็นเวอร์ชันใหม่ ${f.note || ""}${f.prompter ? " แล้วสร้าง teleprompter" : ""}`
+    : `${f.what === "live" ? "เขียนสคริปต์ไลฟ์" : "เขียนสคริปต์"} (ฟังก์ชัน 7) เรื่อง ${f.topic}${f.len ? " ความยาวราว " + f.len : " ความยาวไม่จำกัด ยาวตามความเข้มข้นของเรื่อง แต่ห้ามยืด"}${f.tone ? " โหมด" + f.tone : ""}${f.briefing ? " พร้อม briefing" : ""}${f.appendix ? " พร้อมภาคผนวกรูป/ฟุตเทจ" : ""}. ${f.note || ""}${f.prompter ? " เมื่อเสร็จให้สร้าง teleprompter ด้วย" : ""}`,
+  coach: f => f.what === "feedback"
+    ? `practice feedback ไฟล์ ${f.path}${f.std ? " เทียบกับบททดสอบมาตรฐานในแผนฝึก (reports/training-plan-2026-10-11.md ส่วน D)" : ""} แล้วบอกว่าควรฝึกอะไรต่อ`
+    : `วิเคราะห์ creator ใหม่ (ฟังก์ชัน 6) จาก ${f.path || "~/Desktop/Agent-M"} แล้วเทียบกับรายงาน reports/creator-analysis-2026-10-11.md`,
+};
+document.querySelectorAll("aside form").forEach(form => form.onsubmit = (e) => {
+  e.preventDefault();
+  const fd = new FormData(form); const f = Object.fromEntries(fd.entries());
+  form.querySelectorAll("input[type=checkbox]").forEach(c => f[c.name] = c.checked);
+  send(PROMPTS[form.dataset.fn](f).replace(/\s+\./g, ".").trim());
+});
+
+async function refreshStatus() {
+  try {
+    const s = await (await fetch("/api/status", { headers: H })).json();
+    const dot = $("#statusDot"); dot.className = "dot " + s.bridge;
+    if (s.bridge === "idle") {
+      $("#statusText").textContent = `${s.project || "-"} › ${s.timeline || "-"}`;
+      $("#statusPill").title = "Resolve พร้อม";
+      const sel = document.querySelectorAll(".tlSelect");
+      sel.forEach(x => { const cur = x.value; x.innerHTML = (s.timelines || []).map(t => `<option ${t === (cur || s.timeline) ? "selected" : ""}>${esc(t)}</option>`).join(""); });
+    } else if (s.bridge === "busy") { $("#statusText").textContent = "Resolve กำลังทำงาน…"; }
+    else { $("#statusText").textContent = "ยังไม่ได้เปิด Bridge"; $("#statusPill").title = "ใน Resolve: Workspace › Scripts › DaVinci Bot Bridge"; }
+  } catch { $("#statusDot").className = "dot dead"; $("#statusText").textContent = "เชื่อมเซิร์ฟเวอร์ไม่ได้"; }
+}
+async function loadLooks() {
+  const l = await (await fetch("/api/looks", { headers: H })).json();
+  $("#lookSelect").innerHTML = l.map(x => `<option>${esc(x)}</option>`).join("");
+}
+refreshStatus(); loadLooks(); setInterval(() => { if (!busy) refreshStatus(); }, 6000);
+</script>
+</body>
+</html>
