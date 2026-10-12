@@ -186,13 +186,17 @@ dialog pre { background: var(--code); padding: 10px; border-radius: 8px; max-hei
           <label class="check"><input type="checkbox" name="std" checked> เทียบกับบททดสอบมาตรฐาน</label>
           <button class="btn primary">เริ่ม</button>
         </form></details>
-      <details class="card"><summary><span class="num">7</span><span><div class="t">เขียนสคริปต์</div><div class="d">สคริปต์เรื่องจริงแนวบู๊/ปริศนา → teleprompter</div></span></summary>
+      <details class="card"><summary><span class="num">7</span><span><div class="t">เขียนสคริปต์</div><div class="d">Digital & Audio Forensics → teleprompter</div></span></summary>
         <form data-fn="script">
           <label>ทำอะไร<select name="what"><option value="write">เขียนสคริปต์ใหม่</option><option value="live">สคริปต์ไลฟ์ (beat-sheet)</option><option value="prompter">ทำ teleprompter จากสคริปต์ที่มี</option><option value="revise">ปรับสคริปต์ที่มี</option></select></label>
-          <label>เรื่อง / path สคริปต์<input type="text" name="topic" placeholder="เช่น ปฏิบัติการช่วยทีมหมูป่า หรือ ~/Desktop/Agent-M/MH370/mh370_script_v2.md" required></label>
+          <label>หมวดหมู่<select name="pillar"><option value="">ให้ AI เลือก</option><option>Audio &amp; Signal Anomalies</option><option>Cryptography &amp; Internet Mysteries</option><option>Tech Disasters &amp; Digital Forensics</option></select></label>
+          <label>หัวข้อคอนเทนต์ (Hook/Title)<input type="text" name="title" placeholder="เช่น สัญญาณวิทยุที่ส่งเสียงหึ่งมา 40 ปีไม่เคยหยุด"></label>
+          <label>การเปรียบเทียบ/การเล่าเรื่อง (Agent-M Style)<input type="text" name="metaphor" placeholder="เช่น เหมือนวิทยุที่เปิดทิ้งไว้รอสายใครสักคน"></label>
+          <label>หรือวางตารางหลายแถว (หมวดหมู่ | หัวข้อ | การเปรียบเทียบ)<textarea name="table" placeholder="Audio &amp; Signal | ... | ...&#10;Cryptography | ... | ..."></textarea></label>
+          <label>path สคริปต์ (สำหรับ teleprompter / ปรับสคริปต์)<input type="text" name="topic" placeholder="~/Desktop/Agent-M/<เรื่อง>/<topic>_script_v1.md"></label>
           <div class="row">
             <label>ความยาว<select name="len"><option value="">ไม่จำกัด (ตามความเข้มข้น)</option><option>15 นาที</option><option>20 นาที</option><option>25 นาที</option><option>30 นาที</option><option>45 นาที</option><option>60 นาที</option></select></label>
-            <label>โทน<select name="tone"><option value="">ให้ AI เลือกโหมด</option><option>ปฏิบัติการ/ภารกิจ</option><option>หนี/เอาชีวิตรอด</option><option>ไล่ล่า</option><option>รุ่งเรือง→ล่มสลาย</option><option>ปริศนาที่ยังไม่คลี่คลาย</option></select></label>
+            <label>โทน<select name="tone"><option value="">ให้ AI เลือกโหมด</option><option>ไขรหัสไปพร้อมคนดู</option><option>โซ่เหตุการณ์ (หายนะเทคโนโลยี)</option><option>ปฏิบัติการ/ภารกิจ</option><option>ไล่ล่า (ตามล่าแฮกเกอร์)</option><option>ปริศนาที่ยังไม่คลี่คลาย</option><option>รุ่งเรือง→ล่มสลาย</option></select></label>
           </div>
           <label class="check"><input type="checkbox" name="briefing"> ทำ briefing ประกอบ</label>
           <label class="check"><input type="checkbox" name="appendix"> ภาคผนวกรูป/ฟุตเทจ</label>
@@ -431,11 +435,15 @@ const PROMPTS = {
   broll: f => `ใส่ B-roll / insert (ฟังก์ชัน 3) ให้ timeline "${f.timeline}"${f.freq ? " " + f.freq : ""}${f.kind ? " เน้น" + f.kind : ""}, ${f.meme ? "ใส่มีมได้" : "ไม่เอามีม"}. ${f.note || ""}`,
   audio: f => `ใส่เพลงประกอบและ SFX (ฟังก์ชัน 4) ให้ timeline "${f.timeline}"${f.tone ? " โทน" + f.tone : ""}${f.density ? " SFX " + f.density : ""}. ${f.note || ""}`,
   look: f => `ใส่ look "${f.look}" (ฟังก์ชัน 5) ให้ timeline "${f.timeline}" — ทำภาพเทียบก่อน/หลังให้ดูก่อน แล้วรอฉันอนุมัติ`,
-  script: f => f.what === "prompter"
-    ? `สร้าง teleprompter (ฟังก์ชัน 7) จากสคริปต์ ${f.topic} แล้วบอกความยาวบทพูดจริงเทียบงบ`
-    : f.what === "revise"
-    ? `ปรับสคริปต์ ${f.topic} (ฟังก์ชัน 7) ตามกฎล่าสุดของ action-story-channel-script${f.len ? " ให้ยาวราว " + f.len : " ความยาวไม่จำกัด (ห้ามตัดเพราะยาว แต่ตัดส่วนที่ยืด)"} เก็บเป็นเวอร์ชันใหม่ ${f.note || ""}${f.prompter ? " แล้วสร้าง teleprompter" : ""}`
-    : `${f.what === "live" ? "เขียนสคริปต์ไลฟ์" : "เขียนสคริปต์"} (ฟังก์ชัน 7) เรื่อง ${f.topic}${f.len ? " ความยาวราว " + f.len : " ความยาวไม่จำกัด ยาวตามความเข้มข้นของเรื่อง แต่ห้ามยืด"}${f.tone ? " โหมด" + f.tone : ""}${f.briefing ? " พร้อม briefing" : ""}${f.appendix ? " พร้อมภาคผนวกรูป/ฟุตเทจ" : ""}. ${f.note || ""}${f.prompter ? " เมื่อเสร็จให้สร้าง teleprompter ด้วย" : ""}`,
+  script: f => {
+    const len = f.len ? ` ความยาวราว ${f.len}` : " ความยาวไม่จำกัด ยาวตามความเข้มข้นของเรื่อง แต่ห้ามยืด";
+    const extras = `${f.briefing ? " พร้อม briefing" : ""}${f.appendix ? " พร้อมภาคผนวกรูป/ฟุตเทจ" : ""}${f.note ? ". " + f.note : ""}${f.prompter ? ". เมื่อเสร็จให้สร้าง teleprompter ด้วย" : ""}`;
+    if (f.what === "prompter") return `สร้าง teleprompter (ฟังก์ชัน 7) จากสคริปต์ ${f.topic} แล้วบอกความยาวบทพูดจริงและผล hook_check`;
+    if (f.what === "revise") return `ปรับสคริปต์ ${f.topic} (ฟังก์ชัน 7) ให้เป็นสไตล์ Agent-M ตามกฎล่าสุด เก็บเป็นเวอร์ชันใหม่${len}${extras}`;
+    const kind = f.what === "live" ? "เขียนสคริปต์ไลฟ์" : "เขียนสคริปต์";
+    if (f.table && f.table.trim()) return `${kind} (ฟังก์ชัน 7) จากตารางนี้ (หมวดหมู่ | หัวข้อคอนเทนต์ | การเปรียบเทียบ/การเล่าเรื่อง):\n${f.table.trim()}\n${len}${extras}`;
+    return `${kind} (ฟังก์ชัน 7) จาก input นี้\n| หมวดหมู่ | หัวข้อคอนเทนต์ (Hook/Title) | การเปรียบเทียบ/การเล่าเรื่อง (Agent-M Style) |\n|---|---|---|\n| ${f.pillar || "(ให้ AI เลือก)"} | ${f.title || f.topic || "(ว่าง)"} | ${f.metaphor || "(ให้ AI เสนอ)"} |\n${len}${f.tone ? " โหมด" + f.tone : ""}${extras}`;
+  },
   coach: f => f.what === "feedback"
     ? `practice feedback ไฟล์ ${f.path}${f.std ? " เทียบกับบททดสอบมาตรฐานในแผนฝึก (reports/training-plan-2026-10-11.md ส่วน D)" : ""} แล้วบอกว่าควรฝึกอะไรต่อ`
     : `วิเคราะห์ creator ใหม่ (ฟังก์ชัน 6) จาก ${f.path || "~/Desktop/Agent-M"} แล้วเทียบกับรายงาน reports/creator-analysis-2026-10-11.md`,

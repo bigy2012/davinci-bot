@@ -10,7 +10,7 @@ from pathlib import Path
 
 from mcp.server.mcpserver import MCPServer
 
-from davinci_bot import audio, broll, captions, creator, media, prompter, speech
+from davinci_bot import audio, broll, captions, creator, docs, media, prompter, speech
 from davinci_bot.bridge import call
 
 INSTRUCTIONS = """\
@@ -485,7 +485,8 @@ def place_broll(timeline: str, items: list[dict]) -> dict:
              "motion": "in" | "out" | "left" | "right" | "none",   # Ken Burns ของภาพนิ่ง
              "src_start": 4.0,                    # วิดีโอ: เริ่มจากวินาทีไหนของไฟล์
              "credit": true/false/"ข้อความเอง",    # ค่าเริ่มต้น: ใส่ให้อัตโนมัติถ้าสิทธิ์ระดับ B/C
-             "box": [cx, cy, w, h]}]              # (ไม่บังคับ) ตำแหน่ง/ขนาดการ์ดเป็นสัดส่วนของจอ
+             "box": [cx, cy, w, h],               # (ไม่บังคับ) ตำแหน่ง/ขนาดการ์ดเป็นสัดส่วนของจอ
+             "focus": [x0, y0, x1, y1]}]          # ภาพหน้าเอกสารจาก official_doc: เห็นทั้งหน้าแล้วซูมเข้าประโยคที่ไฮไลต์
     full = เต็มจอ (ภาพนิ่ง Ken Burns, สัดส่วนต่าง = พื้นหลังเบลอ), pip = การ์ดข้างคนพูด,
     top = การ์ดด้านบนของคลิปแนวตั้ง, meme = การ์ดกลางจอเด้งเอียง"""
     W, H, fps = _timeline_dims(timeline)
@@ -791,6 +792,30 @@ def practice_feedback(path: str, script_text: str | None = None, script_path: st
     ถ้าให้ script_text หรือ script_path (ตัดเฉพาะส่วนที่อัด) จะบอก % ที่พูดตรงบท และวลีที่ข้าม/เปลี่ยน"""
     text = script_text or (Path(script_path).expanduser().read_text(encoding="utf-8") if script_path else None)
     return creator.practice_feedback(_abs(path), text)
+
+
+@mcp.tool()
+def official_doc(source: str, action: str = "info", query: str | None = None, page: int | None = None,
+                 highlight: list[str] | None = None, out_dir: str | None = None) -> dict:
+    """ทำงานกับเอกสารทางการ (PDF รายงานสอบสวน, คำพิพากษา, แฟ้ม FBI Vault, รายงานรัฐบาล) - source = path หรือ URL
+    (URL จะดาวน์โหลดครั้งเดียวเก็บ cache - ต้องให้ผู้ใช้อนุมัติการดาวน์โหลดก่อน: บอกชื่อเอกสาร แหล่ง ขนาดโดยประมาณ)
+    action:
+      info   -> จำนวนหน้า, metadata, สารบัญ (หาบทที่ต้องการ)
+      search -> query: หน้าที่มีคำนี้ + ข้อความรอบๆ (ใช้อ้างอิงแบบระบุหน้า)
+      text   -> page: ข้อความทั้งหน้า (อ่านบริบทก่อนอ้าง)
+      image  -> page + highlight (ประโยคตรงตามเอกสาร): ภาพหน้าเอกสารที่ไฮไลต์เหลือง + focus box
+                ใช้กับ place_broll เป็น "เอกสารจริง": {"path": image, "focus": focus, "layout": "full"} จะเห็นทั้งหน้าแล้วซูมเข้าประโยค
+                out_dir แนะนำ ~/Desktop/Agent-M/<เรื่อง>/docs"""
+    src = source if source.startswith(("http://", "https://")) else _abs(source)
+    if action == "info":
+        return docs.info(src)
+    if action == "search":
+        return docs.search(src, query or "")
+    if action == "text":
+        return docs.page_text(src, int(page or 1))
+    if action == "image":
+        return docs.page_image(src, int(page or 1), highlight, out_dir and _abs(out_dir))
+    raise ValueError("action must be info | search | text | image")
 
 
 @mcp.tool()

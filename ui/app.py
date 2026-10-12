@@ -32,13 +32,16 @@ PORT = int(os.environ.get("DAVINCI_BOT_PORT", "8765"))
 TOKEN = secrets.token_urlsafe(24)
 UV = os.environ.get("UV_BIN", str(Path("~/.local/bin/uv").expanduser()))
 SKILLS = ["davinci-rough-cut", "davinci-subtitles", "davinci-broll", "davinci-audio", "davinci-look",
-          "davinci-creator-analysis", "davinci-script", "action-story-channel-script"]
+          "davinci-creator-analysis", "davinci-script"]  # action-story-channel-script is read by path (see below)
 AGENT_M = Path("~/Desktop/Agent-M").expanduser()
 
 
 def newest_script_skill():
     """The user's script-writing skill exists locally and synced from claude.ai; always use the newest copy."""
     cands = list(Path("~/.claude/skills").expanduser().glob("synced/*/action-story-channel-script/SKILL.md"))
+    # the desktop app refreshes its own copy first (the synced copy can lag behind a claude.ai edit)
+    cands += list(Path("~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin").expanduser()
+                  .glob("*/*/skills/action-story-channel-script/SKILL.md"))
     cands += [p for p in Path("~/.claude/skills").expanduser().glob("*/SKILL.md")
               if "name: action-story-channel-script" in p.read_text(encoding="utf-8", errors="ignore")[:300]
               or 'name: "action-story-channel-script"' in p.read_text(encoding="utf-8", errors="ignore")[:300]]
@@ -49,6 +52,17 @@ FILE_ROOTS = [ROOT, media.CACHE, Path("~/Desktop/Agent-M").expanduser(),
 # tools that run without asking: read-only + the editing tools whose plans are approved in chat (skills enforce it)
 AUTO_ALLOW_PREFIX = "mcp__davinci-bot__"
 ASK_DAVINCI = {"mcp__davinci-bot__fetch_broll"}  # downloads files -> always confirm in the UI
+
+
+def needs_confirm(name, tool_input):
+    """official_doc only downloads when given a URL it has not cached yet."""
+    if name in ASK_DAVINCI:
+        return True
+    if name == "mcp__davinci-bot__official_doc" and str(tool_input.get("source", "")).startswith(("http://", "https://")):
+        import hashlib
+        from davinci_bot import docs
+        return not (docs.DOC_CACHE / (hashlib.sha1(tool_input["source"].encode()).hexdigest()[:16] + ".pdf")).exists()
+    return False
 AUTO_ALLOW = {"Read", "Glob", "Grep", "Skill", "TodoWrite", "WebSearch", "WebFetch"}
 WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 WRITE_ROOTS = [AGENT_M, ROOT / "reports"]  # scripts, briefings, reports: written without asking
@@ -72,7 +86,7 @@ TOOL_NAMES_TH = {
     "place_broll": "วาง B-roll", "audio_library": "อ่านคลังเสียง", "sfx_cue_map": "หาจังหวะใส่เสียง",
     "preview_audio_mix": "มิกซ์เสียงตัวอย่าง", "place_audio": "วางเพลง/SFX", "preview_look": "ทำภาพเทียบก่อน/หลัง",
     "apply_look": "ใส่ look", "creator_footage_metrics": "วัดการนำเสนอจากฟุตเทจ", "practice_feedback": "ฟีดแบ็กการฝึก",
-    "timeline_info": "อ่าน timeline", "make_prompter": "สร้าง teleprompter", "script_digest": "นับความยาวสคริปต์", "list_timelines": "ดูรายชื่อ timeline", "transcribe": "ถอดเสียง",
+    "timeline_info": "อ่าน timeline", "make_prompter": "สร้าง teleprompter", "official_doc": "อ่านเอกสารทางการ", "script_digest": "นับความยาวสคริปต์", "list_timelines": "ดูรายชื่อ timeline", "transcribe": "ถอดเสียง",
 }
 
 
@@ -143,7 +157,7 @@ class Session:
             q.put_nowait(event)
 
     async def can_use_tool(self, name, tool_input, ctx):
-        if name in AUTO_ALLOW or (name.startswith(AUTO_ALLOW_PREFIX) and name not in ASK_DAVINCI):
+        if name in AUTO_ALLOW or (name.startswith(AUTO_ALLOW_PREFIX) and not needs_confirm(name, tool_input)):
             return PermissionResultAllow()
         if name in WRITE_TOOLS:
             target = Path(str(tool_input.get("file_path") or tool_input.get("notebook_path") or "")).expanduser()

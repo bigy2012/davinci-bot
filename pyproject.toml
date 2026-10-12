@@ -9,5 +9,6 @@ dependencies = [
     "mcp>=2.3",
     "numpy>=2.2.6",
     "pillow>=12.3.0",
+    "pymupdf>=1.28.2",
     "pythainlp>=5.4.0",
 ]

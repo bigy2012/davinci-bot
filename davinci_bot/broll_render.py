@@ -98,6 +98,23 @@ def ken_burns(src, W, H, k, motion):
     return src.transform((W, H), Image.EXTENT, box, Image.BICUBIC)
 
 
+def doc_zoom(img, W, H, k, focus):
+    """Official-document insert: whole page first, then glide into the highlighted passage and hold there.
+    focus = normalized (x0, y0, x1, y1) box on the page. k = 0..1 progress."""
+    w, h = img.size
+    fx0, fy0, fx1, fy1 = focus[0] * w, focus[1] * h, focus[2] * w, focus[3] * h
+    s0 = min(W * 0.9 / w, H * 0.92 / h)                        # full page visible
+    s1 = min(W * 0.88 / max(1, fx1 - fx0), H * 0.7 / max(1, fy1 - fy0))  # passage fills the frame
+    s1 = max(s0, min(s1, s0 * 6))
+    e = 0.0 if k < 0.18 else 1.0 if k > 0.62 else (lambda u: u * u * (3 - 2 * u))((k - 0.18) / 0.44)
+    scale = s0 * (s1 / s0) ** e * (1 + 0.025 * max(0.0, k - 0.62))  # tiny drift while holding
+    cx = w / 2 + ((fx0 + fx1) / 2 - w / 2) * e
+    cy = h / 2 + ((fy0 + fy1) / 2 - h / 2) * e
+    vw, vh = W / scale, H / scale
+    return img.transform((W, H), Image.EXTENT, (cx - vw / 2, cy - vh / 2, cx + vw / 2, cy + vh / 2),
+                         Image.BICUBIC, fillcolor=(16, 16, 18))
+
+
 def card_box(layout, W, H, custom=None):
     """(cx, cy, max_w, max_h) of the inset area."""
     if custom:
@@ -140,8 +157,11 @@ def credit_layer(text, W, H, anchor="left"):
     d = ImageDraw.Draw(layer)
     x = W * 0.025 if anchor == "left" else W * 0.975
     y = H * 0.965
-    d.text((x, y), text, font=f, anchor="ls" if anchor == "left" else "rs", fill=(255, 255, 255, 230),
-           stroke_width=2, stroke_fill=(0, 0, 0, 160))
+    a = "ls" if anchor == "left" else "rs"
+    x0, y0, x1, y1 = d.textbbox((x, y), text, font=f, anchor=a)
+    pad = f.size * 0.45
+    d.rounded_rectangle((x0 - pad, y0 - pad * 0.7, x1 + pad, y1 + pad * 0.7), radius=pad, fill=(0, 0, 0, 150))
+    d.text((x, y), text, font=f, anchor=a, fill=(255, 255, 255, 235))  # dark pill: readable on white pages too
     return layer
 
 
@@ -167,7 +187,13 @@ def render_item(args):
         else:
             img = ImageOps.exif_transpose(Image.open(it["path"])).convert("RGB")
             aspect_gap = abs(math.log((img.width / img.height) / (W / H)))
-            if aspect_gap > 0.35:  # e.g. portrait photo in a 16:9 frame: blurred backdrop + whole photo
+            if it.get("focus"):  # document page: zoom into the highlighted passage
+                for i in range(n):
+                    im = doc_zoom(img, W, H, i / max(1, n - 1), it["focus"]).convert("RGBA")
+                    if credit:
+                        im = Image.alpha_composite(im, credit)
+                    enc.stdin.write(im.tobytes())
+            elif aspect_gap > 0.35:  # e.g. portrait photo in a 16:9 frame: blurred backdrop + whole photo
                 bg = blurred_backdrop(img, W, H).convert("RGBA")
                 fw, fh = contain_size(img.width, img.height, W * 0.92, H * 0.92)
                 fg = img.resize((int(fw * 1.12), int(fh * 1.12)), Image.LANCZOS)

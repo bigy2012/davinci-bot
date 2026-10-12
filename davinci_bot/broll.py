@@ -341,7 +341,9 @@ def fetch(ids, folder=None):
                 safe = re.sub(r"[^\w\-]+", "_", x["title"])[:50].strip("_") or cid
                 path = dest / f"{cid}_{safe}{ext}"
                 if not path.exists():
-                    with c.stream("GET", url, timeout=120) as r:
+                    # Flickr's CDN answers 403 to our descriptive User-Agent; a plain one works
+                    headers = {"User-Agent": "curl/8.7.1"} if "staticflickr.com" in url else None
+                    with c.stream("GET", url, headers=headers, timeout=120) as r:
                         r.raise_for_status()
                         size = int(r.headers.get("content-length") or 0)
                         if size > MAX_DOWNLOAD:

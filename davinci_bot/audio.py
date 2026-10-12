@@ -19,13 +19,14 @@ DEFAULT_LIB = {"sfx": ["~/Desktop/Agent-M/SFX"],
 
 # filename keywords -> role, used as a hint next to the measured shape
 ROLES = [
-    ("impact", ["boom", "hit", "impact", "punch", "slam", "thud", "bass-drop", "vine"]),
-    ("transition", ["whoosh", "swoosh", "swish", "swipe", "transition", "riser", "sweep"]),
+    ("impact", ["boom", "hit", "impact", "punch", "slam", "thud", "bass-drop", "vine", "braam"]),
+    ("transition", ["whoosh", "swoosh", "swish", "swipe", "transition", "riser", "sweep", "glitch"]),
     ("comedy", ["boing", "spring", "fail", "trumpet", "wrong", "bruh", "nooo", "villager", "among", "creeper",
                 "bad-to-the-bone", "honk", "squeak", "eating", "cartoon"]),
     ("positive", ["success", "victory", "fanfare", "ding", "correct", "benar", "bell", "win", "cash"]),
     ("ui", ["click", "pop", "bubble", "typing", "keyboard", "shutter", "camera", "notification", "minimal"]),
     ("tension", ["suspense", "tension", "drone", "heartbeat", "tick", "clock", "riser", "dramatic", "horror"]),
+    ("signal", ["radio", "static", "morse", "sonar", "modem", "dial-up", "blip", "beep", "computer"]),
 ]
 
 

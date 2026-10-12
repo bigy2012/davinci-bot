@@ -32,7 +32,7 @@ skill อยู่ในโฟลเดอร์ `skills/` และลิงก
 | 4 | `davinci-audio` | เพลงประกอบ + SFX จากคลังของคุณ: หาจังหวะตบมุก/กระแทกอารมณ์/ลุ้น, ให้เพลงพุ่งตรงจุดหักมุม, ducking ใต้เสียงพูดอัตโนมัติ |
 | 5 | `davinci-look` | preset แต่งหน้าใส `natural-skin` (.drx: ผิวเนียน+ใส) และ LUT `natural-skin-tone` 3 ระดับ (.cube: ผิวใส ใช้ได้ทั้ง Resolve และ CapCut) |
 | 6 | `davinci-creator-analysis` | วิเคราะห์ creator จากงานจริง (ฟุตเทจ สคริปต์ แบรนด์) หาเสน่ห์ จุดเด่น จุดด้อย แนวทางต่อ ออกเป็นรายงาน .md ใน `reports/` |
-| 7 | `davinci-script` | เขียนสคริปต์ด้วยกฎของ skill `action-story-channel-script` ของคุณ (ใช้เวอร์ชันล่าสุดเสมอ) + นับความยาวกับงบ + สร้าง teleprompter (`<เรื่อง>_prompter.html`) |
+| 7 | `davinci-script` | เขียนสคริปต์ Agent-M แนว Digital & Audio Forensics จาก input ตาราง หมวดหมู่ / หัวข้อ / การเปรียบเทียบ (มีช่วง DEMO หน้ากล้อง, Ticking Clock, Visual Metaphors, เอกสารทางการ) ด้วยกฎของ skill `action-story-channel-script` + teleprompter |
 
 ## ขั้นตอนการทำงานของ Claude
 
@@ -54,7 +54,7 @@ skill อยู่ในโฟลเดอร์ `skills/` และลิงก
 | เพลง + SFX | `audio_library`, `sfx_cue_map`, `preview_audio_mix`, `place_audio` |
 | Look / แต่งหน้า | `list_looks`, `preview_look`, `apply_look`, `reset_look` |
 | วิเคราะห์ creator / โค้ช | `creator_footage_metrics`, `script_digest`, `practice_feedback` |
-| สคริปต์ | `make_prompter` (+ skill เขียนสคริปต์ของคุณ) |
+| สคริปต์ | `make_prompter`, `official_doc` (ค้น/อ่าน/ไฮไลต์หน้าเอกสารทางการ) + skill เขียนสคริปต์ของคุณ |
 | ดูงาน | `list_media_pool`, `list_timelines`, `timeline_info`, `open_page` |
 | Export | `list_render_presets`, `render`, `render_status` |
 

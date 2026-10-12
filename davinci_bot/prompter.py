@@ -16,7 +16,7 @@ SCENE = re.compile(r"^#{2,3}\s*(\[.*?\].*|.*ฉาก.*)$")
 
 def extract_scenes(md_text):
     """[(scene title, [paragraphs])] - narration only (no visual cues, notes, quotes or tables)."""
-    scenes, cur, started = [], None, False
+    scenes, cur, started, in_code = [], None, False, False
     for raw in md_text.splitlines():
         line = raw.strip()
         if STOP_HEADINGS.match(line) and started:
@@ -29,8 +29,17 @@ def extract_scenes(md_text):
             continue
         if not started or cur is None or not line:
             continue
-        if line.startswith(("#", ">", "|", "---", "```")) or re.match(r"^\*\*\[.*\]\*\*$", line) or line.startswith("**["):
+        if line.startswith("```"):
+            in_code = not in_code
             continue
+        if in_code or line.startswith(("#", ">", "|", "---")) or re.match(r"^\*\*\[.*\]\*\*$", line) or line.startswith("**["):
+            continue
+        # Agent-M DEMO blocks: keep what is said, drop stage directions
+        if re.match(r"^\[(DEMO|UI|SOUND|เอกสาร|ภาพ)\b", line) or line.startswith(("สิ่งที่ทำบนจอ", "ผลที่คนดูจะเห็น")):
+            continue
+        line = re.sub(r"^🎙️\s*(ต้องพูด)?\s*[:：]?\s*", "", line)
+        if line.startswith("💬"):
+            line = "(พูดเอง) " + re.sub(r"^💬\s*(พูดด้วยคำตัวเอง)?\s*[:：]?\s*", "", line)
         line = re.sub(r"\*\*\[[^\]]*\]\*\*|\[ภาพ:[^\]]*\]|\[INTRO[^\]]*\]", "", line)
         line = re.sub(r"[*_`]", "", line).strip()
         if line.startswith(("- ", "• ")):

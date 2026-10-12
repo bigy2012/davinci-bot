@@ -36,6 +36,7 @@ description: ฟังก์ชัน 4 ของ DaVinci Bot - ใส่เพ�
 | **กระแทกอารมณ์ / เปิดเผย** | คำสำคัญ ตัวเลข ชื่อ คำที่เน้นในซับ จุดหักมุม | impact (vine-boom, hit) | `at` = ต้นคำนั้น (align sync) ระดับ loud ใช้ไม่เกิน 1 ครั้งต่อ 10–15 วิ |
 | **เปลี่ยนฉาก** | CUT / OVERLAY-IN (B-roll เต็มจอ) | transition (whoosh, swoosh) | `at` = จุดตัด ระดับ soft |
 | **ภาพหรือการ์ดโผล่** | OVERLAY-IN แบบ pip/meme, ภาพถ่าย, เอกสาร | ui (pop, camera-shutter, typing, click) | `at` = ตอนการ์ดเข้า ระดับ soft–subtle |
+| **สัญญาณ / หลักฐานดิจิทัล** | ฉาก DEMO, ตอนพูดถึงคลื่นวิทยุ สัญญาณ โค้ด หรือข้อมูลที่โผล่ขึ้นจอ | signal (radio-static, radio-tuning, morse-code, sonar-ping, computer-blips) | `at` = ตอนภาพหรือ terminal เข้า ระดับ soft–normal ถ้าเป็นเสียงยาว ให้ตัดด้วย `max_len` |
 | **ข่าวดี / เงิน / สำเร็จ** | เนื้อหาเชิงบวก ตัวเลขเงิน | positive (ding, success) | ต้นคำ ระดับ normal |
 | **ลุ้น / ค้าง** | ก่อนเฉลย, คำถาม ("จะเป็นยังไง") | swell / riser ที่จบตรงจุดเฉลย, tension | `align: "end"` ให้พีคตรงจุดเฉลย ถ้าทำได้ให้เพลงเบาลงหรือเงียบก่อนเฉลย 0.3–0.6 วิ แล้วตามด้วยเสียงกระแทก |
 | **ทำให้อยากดูต่อ** | ประโยคปิด / CTA / open loop | whoosh + เพลง fade out ตรงคำสุดท้าย | |

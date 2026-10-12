@@ -427,11 +427,21 @@ ln -s "$PWD/skills/davinci-rough-cut" ~/.claude/skills/davinci-rough-cut</code><
 
 <section id="script">
   <h2><span class="num">11</span>ฟังก์ชัน 7: เขียนสคริปต์ → Teleprompter</h2>
-  <p class="sub">ใช้ skill <code>action-story-channel-script</code> ของคุณเป็นกฎการเขียน แล้วต่อเข้ากับงานอัดและตัดต่อ</p>
+  <p class="sub">สคริปต์แนว <b>Digital &amp; Audio Forensics</b> (นักสืบดิจิทัลและผู้ถอดรหัสเสียงปริศนา) ใช้ skill <code>action-story-channel-script</code> ของคุณเป็นกฎการเขียน</p>
+  <div class="table-wrap"><table>
+    <tr><th>หมวดหมู่</th><th>หัวข้อคอนเทนต์ (Hook/Title)</th><th>การเปรียบเทียบ/การเล่าเรื่อง (Agent-M Style)</th></tr>
+    <tr><td>Audio &amp; Signal Anomalies</td><td>สัญญาณวิทยุที่ส่งเสียงหึ่งมา 40 ปีไม่เคยหยุด</td><td>เหมือนวิทยุที่เปิดทิ้งไว้รอสายใครสักคน</td></tr>
+  </table></div>
+  <p style="margin-top:8px">ส่ง input แบบตารางนี้ (แถวเดียวหรือหลายแถว) จะได้สคริปต์ที่มี: ช่วง <b>[DEMO]</b> สาธิตจริงหน้ากล้อง (Terminal, Python, spectrogram, เครื่องดนตรี), <b>Ticking Clock</b> ในฉากโค้ดหรือการเจาะระบบ, คำเปรียบหลักที่ปูไว้แล้วกลับมาเฉลย, cue <code>[UI:]</code> และ <code>[SOUND:]</code> สำหรับทีมตัดต่อ และของสำหรับสมาชิก (ซอร์สโค้ด DEMO)</p>
   <div class="grid2">
     <div class="card"><h3>เขียน / ปรับสคริปต์</h3><ul><li>ใช้กฎจาก skill ของคุณ<b>เวอร์ชันล่าสุด</b>เสมอ (ชุดที่ sync จาก claude.ai)</li><li>บันทึกที่ <code>Agent-M/&lt;เรื่อง&gt;/&lt;topic&gt;_script_vN.md</code> โดยไม่เขียนทับเวอร์ชันเดิม</li><li><b>ความยาวค่าเริ่มต้น = ไม่จำกัด</b> ยาวตามความเข้มข้นของเรื่อง แต่ห้ามยืด (re-hook ทุก 5–8 นาที, ไม่พูดซ้ำ, recap สั้นทุก 15–20 นาที, มี chapters และจุดวางโฆษณา)</li><li>ถ้ากำหนดความยาว จะเทียบกับงบ: 20 นาที ≤ ~9,500 / 25 นาที ≤ ~12,500 / 30 นาที ≤ ~15,500 ตัวอักษร (นับแบบ <code>wc -m</code>)</li></ul></div>
     <div class="card"><h3>Teleprompter</h3><ul><li>ดึงเฉพาะบทพูด ตัดบรรทัดตามจังหวะหายใจ ตัวเลขเป็นตัวหนาสีเหลือง</li><li>Space = เริ่ม/หยุด, ↑↓ = ความเร็ว, +/− = ขนาดตัวอักษร, M = กลับด้านสำหรับกระจก</li><li>ไฟล์ <code>&lt;เรื่อง&gt;_prompter.html</code> เปิดบนแท็บเล็ตหรือจอใต้เลนส์ได้เลย</li></ul></div>
   </div>
+  <div class="card" style="margin-top:14px"><h3>แหล่งข้อมูล: เอกสารทางการเป็นแกน</h3><ul>
+    <li><b>ชั้น A</b> รายงานสอบสวนฉบับสุดท้าย คำพิพากษา แฟ้มคดี (FBI Vault) และรายงานรัฐบาล เป็นที่มาของตัวเลข เวลา ชื่อ และคำพูดทุกตัว</li>
+    <li><b>ชั้น B</b> สำนักข่าวใหญ่และงานวิชาการ ใช้เป็นบริบท / <b>ชั้น C</b> Wikipedia ใช้แค่หาทางไปเอกสารต้นทาง</li>
+    <li>fact-sheet ทุกบรรทัดติดป้ายแหล่งแบบระบุหน้า และท้ายสคริปต์มีตารางแหล่งข้อมูล</li>
+    <li><b>เอกสารจริงบนจอ:</b> <code>[เอกสาร: … หน้า N — ไฮไลต์ "…"]</code> ฟังก์ชัน 3 จะทำ insert ที่เห็นทั้งหน้า แล้วซูมเข้าประโยคที่ไฮไลต์เหลือง พร้อมเครดิต</li></ul></div>
   <p style="margin-top:12px">สั่งว่า "เขียนสคริปต์เรื่อง …" หรือ "ทำ teleprompter จากสคริปต์ …" หรือใช้การ์ด 7 ในหน้าเว็บ</p>
 </section>
 
@@ -469,7 +479,7 @@ ln -s "$PWD/skills/davinci-rough-cut" ~/.claude/skills/davinci-rough-cut</code><
     <tr><td>เพลง + SFX</td><td><code>audio_library</code> <code>sfx_cue_map</code> <code>preview_audio_mix</code> <code>place_audio</code></td><td>วิเคราะห์คลังเสียง, หาจังหวะ, มิกซ์ตัวอย่าง, วางลง track Music/SFX</td></tr>
     <tr><td>Look</td><td><code>list_looks</code> <code>preview_look</code> <code>apply_look</code> <code>reset_look</code></td><td>preset แต่งหน้า/สี, ภาพเทียบก่อน-หลัง, ใส่ทุกคลิป, ล้างสี</td></tr>
     <tr><td>วิเคราะห์ creator</td><td><code>creator_footage_metrics</code> <code>script_digest</code> <code>practice_feedback</code></td><td>วัดการนำเสนอจากฟุตเทจ, สรุปโครงสคริปต์, ฟีดแบ็กไฟล์ฝึก</td></tr>
-    <tr><td>สคริปต์</td><td><code>make_prompter</code></td><td>สร้าง teleprompter จากสคริปต์ + นับความยาวจริง</td></tr>
+    <tr><td>สคริปต์</td><td><code>make_prompter</code> <code>official_doc</code></td><td>สร้าง teleprompter + นับความยาวจริง, ค้น/อ่าน/ไฮไลต์หน้าเอกสารทางการ</td></tr>
     <tr><td>Export</td><td><code>list_render_presets</code> <code>render</code> <code>render_status</code></td><td>สั่ง render และติดตามสถานะ</td></tr>
   </table></div>
 </section>
