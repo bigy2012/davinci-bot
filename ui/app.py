@@ -10,6 +10,7 @@ import json
 import mimetypes
 import os
 import secrets
+import shutil
 import sys
 import uuid
 from pathlib import Path
@@ -30,7 +31,7 @@ from davinci_bot import bridge, media  # noqa: E402
 
 PORT = int(os.environ.get("DAVINCI_BOT_PORT", "8765"))
 TOKEN = secrets.token_urlsafe(24)
-UV = os.environ.get("UV_BIN", str(Path("~/.local/bin/uv").expanduser()))
+UV = os.environ.get("UV_BIN") or shutil.which("uv") or str(Path("~/.local/bin/uv").expanduser())
 SKILLS = ["davinci-rough-cut", "davinci-subtitles", "davinci-broll", "davinci-audio", "davinci-look",
           "davinci-creator-analysis", "davinci-script"]  # action-story-channel-script is read by path (see below)
 AGENT_M = Path("~/Desktop/Agent-M").expanduser()

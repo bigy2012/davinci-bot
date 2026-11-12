@@ -286,7 +286,7 @@ def preview(job):
 
 def main():
     if not features.check("raqm"):
-        sys.exit("libraqm not available - run: brew install libraqm")
+        sys.exit("libraqm not available - macOS: brew install libraqm; Windows: put fribidi-0.dll on PATH")
     job = json.loads(Path(sys.argv[1]).read_text())
     Path(job["out_dir"]).mkdir(parents=True, exist_ok=True)
     if job.get("preview"):

@@ -5,6 +5,8 @@ Workspace > Scripts > DaVinci Bot Bridge. Media analysis (ffprobe, Whisper) runs
 """
 
 import json
+import os
+import sys
 import time
 from pathlib import Path
 
@@ -677,7 +679,9 @@ def place_audio(timeline: str, music: list[dict] | None = None, sfx: list[dict] 
 LOOKS_DIR = Path(__file__).resolve().parent / "presets"
 
 
-RESOLVE_LUT_DIR = Path("/Library/Application Support/Blackmagic Design/DaVinci Resolve/LUT/davinci-bot")
+RESOLVE_LUT_DIR = (Path(os.environ.get("PROGRAMDATA", "C:/ProgramData")) / "Blackmagic Design/DaVinci Resolve/Support/LUT/davinci-bot"
+                   if sys.platform == "win32" else
+                   Path("/Library/Application Support/Blackmagic Design/DaVinci Resolve/LUT/davinci-bot"))
 
 
 def _all_looks():

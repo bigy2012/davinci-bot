@@ -6,6 +6,7 @@ Run as a subprocess: python -m davinci_bot.caption_render job.json
 
 import json
 import math
+import os
 import re
 import subprocess
 import sys
@@ -18,7 +19,10 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont, features
 from davinci_bot.captions import CLINGERS, tokenize, visible_len
 
 FONT_DIRS = [Path.home() / "Library/Fonts", Path("/Library/Fonts"), Path("/System/Library/Fonts"),
-             Path("/System/Library/Fonts/Supplemental")]
+             Path("/System/Library/Fonts/Supplemental"),
+             # Windows: per-user installs, then system fonts
+             Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData/Local")) / "Microsoft/Windows/Fonts",
+             Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts"]
 
 
 def find_font(name):
@@ -299,7 +303,8 @@ def preview(job):
 
 def main():
     if not features.check("raqm"):
-        sys.exit("libraqm not available - run: brew install libraqm (Thai marks would be misplaced)")
+        sys.exit("libraqm not available (Thai marks would be misplaced) - macOS: brew install libraqm; "
+                 "Windows: put fribidi-0.dll on PATH (see SETUP_FOR_CLAUDE.md)")
     job = json.loads(Path(sys.argv[1]).read_text())
     if job.get("preview"):
         print(json.dumps(preview(job), ensure_ascii=False))

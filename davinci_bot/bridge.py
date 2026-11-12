@@ -5,14 +5,18 @@ Free Resolve has no external scripting, so we talk to the in-app Lua bridge thro
   reply    <- IPC_DIR/reply.prefs     (Fusion prefs dump containing Reply = "<n>|<hex json>")
 """
 
-import fcntl
 import json
 import os
 import re
+import sys
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
-IPC_DIR = Path("~/Library/Application Support/davinci-bot/ipc").expanduser()
+if sys.platform == "win32":
+    IPC_DIR = Path(os.environ.get("APPDATA", Path.home() / "AppData/Roaming")) / "davinci-bot" / "ipc"
+else:
+    IPC_DIR = Path("~/Library/Application Support/davinci-bot/ipc").expanduser()
 REPLY = IPC_DIR / "reply.prefs"
 BEAT = IPC_DIR / "beat.prefs"
 BEAT_RE = re.compile(r'Beat = "(idle|busy)\|([^"]*)"')
@@ -27,6 +31,30 @@ NOT_RUNNING = (
 
 class BridgeError(RuntimeError):
     pass
+
+
+@contextmanager
+def _ipc_lock():
+    """Exclusive lock so several Claude sessions never write the same request number."""
+    with open(IPC_DIR / "lock", "a+") as f:
+        if sys.platform == "win32":
+            import msvcrt
+            while True:
+                try:
+                    f.seek(0)
+                    msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError:
+                    time.sleep(0.05)
+            try:
+                yield
+            finally:
+                f.seek(0)
+                msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(f, fcntl.LOCK_EX)
+            yield
 
 
 def to_lua(v):
@@ -59,7 +87,7 @@ def _read_reply():
     """Return (id, payload) from the reply file, or None while it is missing or half-written."""
     try:
         m = REPLY_RE.search(REPLY.read_text(encoding="utf-8", errors="replace"))
-    except FileNotFoundError:
+    except OSError:  # missing, or (Windows) locked while Resolve writes it
         return None
     return (m.group(1), m.group(2)) if m else None
 
@@ -69,7 +97,7 @@ def bridge_state():
     try:
         age = time.time() - BEAT.stat().st_mtime
         m = BEAT_RE.search(BEAT.read_text(encoding="utf-8", errors="replace"))
-    except FileNotFoundError:
+    except OSError:
         return "dead", "no heartbeat file"
     if m and m.group(1) == "busy":
         return "busy", m.group(2)
@@ -80,8 +108,7 @@ def bridge_state():
 
 def call(op, timeout=900, **args):
     IPC_DIR.mkdir(parents=True, exist_ok=True)
-    with open(IPC_DIR / "lock", "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
+    with _ipc_lock():
         counter_file = IPC_DIR / "counter.lua"
         try:
             n = int(counter_file.read_text().split()[-1])

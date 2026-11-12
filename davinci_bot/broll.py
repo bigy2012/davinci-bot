@@ -262,10 +262,14 @@ def contact_sheet(cands, out_path, cols=4, tile=300):
     rows = (len(cands) + cols - 1) // cols
     sheet = Image.new("RGB", (cols * tile, rows * (tile + 34)), (24, 24, 24))
     d = ImageDraw.Draw(sheet)
-    try:
-        f = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 18)
-    except OSError:
-        f = ImageFont.load_default()
+    f = None
+    for font_path in ("/System/Library/Fonts/Supplemental/Arial.ttf", "C:/Windows/Fonts/arial.ttf"):
+        try:
+            f = ImageFont.truetype(font_path, 18)
+            break
+        except OSError:
+            pass
+    f = f or ImageFont.load_default()
 
     def get(x):
         try:
