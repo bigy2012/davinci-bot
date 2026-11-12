@@ -124,8 +124,8 @@ junction ทำให้แก้ `skills/*/SKILL.md` ใน repo แล้ว C
 `davinci-script` (ฟังก์ชัน 7) อ่านกฎจาก skill ชื่อ `action-story-channel-script` ซึ่งเครื่องเดิม sync มาจาก claude.ai ของ account เดิม **account ใหม่จะไม่มี skill นี้** ให้เลือกทางใดทางหนึ่ง:
 
 - ผู้ใช้อัปโหลด skill นั้นเข้า claude.ai ของ account นี้ แล้วมันจะ sync มาที่ `~/.claude/skills/synced/...`
-- หรือทำ junction จากสำเนาใน repo: `New-Item -ItemType Junction -Path "$skills\action-story-channel-script" -Target "$PWD\reports\skill-update\action-story-channel-script"`
-  หมายเหตุ: สำเนาใน repo อาจเก่ากว่าเวอร์ชันที่ผู้ใช้ใช้อยู่ ให้ถามผู้ใช้
+- หรือผู้ใช้ copy โฟลเดอร์ `action-story-channel-script` (มี `SKILL.md`) มาจากเครื่องเดิมเอง แล้ววางไว้ที่ `~/.claude/skills/action-story-channel-script/`
+  skill นี้ไม่ได้อยู่ใน repo เพราะเป็นข้อมูลส่วนตัวของช่อง
 
 ## 8. ฟอนต์, Thai shaping, LUT, โฟลเดอร์งาน
 
@@ -145,6 +145,11 @@ uv run python -c "from PIL import features; print(features.check('raqm'))"
 - ถ้า Desktop ของผู้ใช้อยู่ใน OneDrive (`C:\Users\<ชื่อ>\OneDrive\Desktop`) ให้ตกลงกับผู้ใช้ว่าจะวางไว้ที่ไหน แล้วแก้ `library.json` (คลัง SFX/MUSIC) และบอกตัวเองว่า path ใน skill ต้องแปลตาม
 - ข้างในมี `SFX/`, `MUSIC/`, `LUTs/`, โลโก้, `CLAUDE.md` แบรนด์ช่อง, โฟลเดอร์เรื่องแต่ละตอน (สคริปต์, แกนเรื่อง)
 - ถ้าไม่มีโฟลเดอร์นี้ bot ยังตัดต่อได้ แต่ฟังก์ชันเพลง/SFX และสคริปต์จะหาไฟล์ไม่เจอ
+
+**โฟลเดอร์ `reports/` ใน repo** ก็ **ไม่ได้อยู่ใน git** (ถูก `.gitignore` ไว้เพราะเป็นข้อมูลส่วนตัว) ผู้ใช้ต้อง copy มาจากเครื่องเดิมไปไว้ที่ `davinci-bot/reports/` ข้างในมีแผนช่อง (`channel-strategy-agent-m.md`), รายงานวิเคราะห์ creator, แผนฝึก (`training-plan-*.md`) และค่าเดิม (`metrics.json`) ที่ skill `davinci-script`, `davinci-creator-analysis` และเครื่องมือ `practice_feedback` อ่าน
+ทำนองเดียวกัน `presets/examples/` (ภาพตัวอย่าง look) ไม่ได้อยู่ใน git แต่ไม่จำเป็นต่อการทำงาน
+
+**ห้าม commit ไฟล์ใน `reports/`, `presets/examples/` หรือข้อมูลส่วนตัวของผู้ใช้ขึ้น repo เพราะ repo นี้เป็น public** และ commit ด้วยอีเมล noreply ของ GitHub เท่านั้น (`git config user.email 121282845+bigy2012@users.noreply.github.com`)
 
 ## 9. สิ่งที่ Claude เครื่องเดิมเรียนรู้มา (บันทึกเป็น memory ของเครื่องนี้ด้วย)
 
@@ -209,7 +214,8 @@ uv run python -c "from PIL import features; print(features.check('raqm'))"
 - [ ] junction skill 7 ตัว + `action-story-channel-script`
 - [ ] ฟอนต์ Kanit / Noto Sans Thai / Prompt
 - [ ] `features.check('raqm')` → True
-- [ ] copy โฟลเดอร์ Agent-M จากเครื่องเดิม + แก้ `library.json` ถ้า path ต่าง
+- [ ] copy โฟลเดอร์ Agent-M, `reports/` และ skill `action-story-channel-script` จากเครื่องเดิม + แก้ `library.json` ถ้า path ต่าง
+- [ ] `git config user.email` เป็นอีเมล noreply
 - [ ] บันทึก memory จากข้อ 9
 - [ ] session ใหม่ → ผ่านทุกข้อใน 10
 
